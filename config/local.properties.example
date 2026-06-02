@@ -1,0 +1,17 @@
+# Copy this file to config/local.properties and fill in local machine values.
+# config/local.properties is ignored by Git and must not be committed.
+
+# Complete endpoint wins over host/port/path when set.
+ki.endpoint=
+
+# Alternative endpoint parts, used when ki.endpoint is empty.
+ki.host=localhost
+ki.port=8000
+ki.path=/chat
+
+# Optional credentials and model selection for the local AI service.
+ki.apiKey=
+ki.model=
+
+# Local storage folders. These folders are ignored by Git.
+chat.directory=chats

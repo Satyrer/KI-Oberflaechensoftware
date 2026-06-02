@@ -2,28 +2,74 @@ package kioberflaeche.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 public record AppConfig(String aiEndpoint, String aiApiKey, String aiModel, String chatDirectory) {
-    private static final String DEFAULT_AI_ENDPOINT = "http://localhost:8000/chat";
+    private static final String LOCAL_CONFIG_PATH = "config/local.properties";
+    private static final String DEFAULT_AI_HOST = "localhost";
+    private static final String DEFAULT_AI_PORT = "8000";
+    private static final String DEFAULT_AI_PATH = "/chat";
     private static final String DEFAULT_CHAT_DIRECTORY = "chats";
 
     public static AppConfig load() {
         Properties properties = new Properties();
+        loadClasspathProperties(properties);
+        loadLocalProperties(properties);
+
+        String endpoint = value("ki.endpoint", "KI_ENDPOINT", properties, "");
+        if (endpoint.isBlank()) {
+            endpoint = endpointFromParts(properties);
+        }
+
+        return new AppConfig(
+                endpoint,
+                value("ki.apiKey", "KI_API_KEY", properties, ""),
+                value("ki.model", "KI_MODEL", properties, ""),
+                value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY)
+        );
+    }
+
+    private static void loadClasspathProperties(Properties properties) {
         try (InputStream stream = AppConfig.class.getResourceAsStream("/application.properties")) {
             if (stream != null) {
                 properties.load(stream);
             }
         } catch (IOException ignored) {
-            // Defaults and environment variables keep the app usable without a config file.
+            // Defaults keep the app usable without a bundled config file.
+        }
+    }
+
+    private static void loadLocalProperties(Properties properties) {
+        String configuredPath = System.getProperty("ki.config");
+        if (configuredPath == null || configuredPath.isBlank()) {
+            configuredPath = System.getenv("KI_CONFIG");
+        }
+        if (configuredPath == null || configuredPath.isBlank()) {
+            configuredPath = LOCAL_CONFIG_PATH;
         }
 
-        return new AppConfig(
-                value("ki.endpoint", "KI_ENDPOINT", properties, DEFAULT_AI_ENDPOINT),
-                value("ki.apiKey", "KI_API_KEY", properties, ""),
-                value("ki.model", "KI_MODEL", properties, ""),
-                value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY)
-        );
+        Path path = Path.of(configuredPath);
+        if (!Files.isRegularFile(path)) {
+            return;
+        }
+
+        try (InputStream stream = Files.newInputStream(path)) {
+            properties.load(stream);
+        } catch (IOException ignored) {
+            // System properties and environment variables can still override defaults.
+        }
+    }
+
+    private static String endpointFromParts(Properties properties) {
+        String host = value("ki.host", "KI_HOST", properties, DEFAULT_AI_HOST);
+        String port = value("ki.port", "KI_PORT", properties, DEFAULT_AI_PORT);
+        String path = value("ki.path", "KI_PATH", properties, DEFAULT_AI_PATH);
+        if (!path.startsWith("/")) {
+            path = "/" + path;
+        }
+        return "http://" + host + ":" + port + path;
     }
 
     private static String value(String propertyKey, String envKey, Properties properties, String defaultValue) {
