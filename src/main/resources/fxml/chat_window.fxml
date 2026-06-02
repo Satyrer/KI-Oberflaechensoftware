@@ -7,6 +7,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.SplitPane?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.ChatController" styleClass="root">
     <left>
@@ -19,24 +20,39 @@
         </VBox>
     </left>
     <center>
-        <BorderPane styleClass="chat-pane">
-            <top>
-                <HBox styleClass="chat-header">
-                    <Label fx:id="titleLabel" text="KI Chat" styleClass="chat-title"/>
-                    <Label fx:id="statusLabel" text="Bereit" styleClass="chat-status"/>
+        <SplitPane dividerPositions="0.72" styleClass="content-split">
+            <BorderPane styleClass="chat-pane">
+                <top>
+                    <HBox styleClass="chat-header">
+                        <Label fx:id="titleLabel" text="KI Chat" styleClass="chat-title"/>
+                        <Label fx:id="statusLabel" text="Bereit" styleClass="chat-status"/>
+                    </HBox>
+                </top>
+                <center>
+                    <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" pannable="true" styleClass="messages-scroll-pane">
+                        <VBox fx:id="messagesBox" fillWidth="true" styleClass="messages-box"/>
+                    </ScrollPane>
+                </center>
+                <bottom>
+                    <HBox styleClass="composer">
+                        <TextArea fx:id="inputArea" promptText="Nachricht eingeben" wrapText="true" onKeyPressed="#handleInputKeyPressed" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="sendButton" text="Senden" styleClass="send-button" onAction="#sendMessage"/>
+                    </HBox>
+                </bottom>
+            </BorderPane>
+            <VBox styleClass="remote-admin-pane">
+                <Label text="n8n Chat-Verwaltung" styleClass="remote-admin-title"/>
+                <Label text="Alte Ausfuehrungen aus der aktuellen KI-VM laden, exportieren oder entfernen." wrapText="true" styleClass="remote-admin-help"/>
+                <Button fx:id="refreshRemoteChatsButton" text="Alte Chats laden" maxWidth="Infinity" onAction="#refreshRemoteChats"/>
+                <ListView fx:id="remoteChatListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
+                <Label text="Vorschau" styleClass="remote-section-title"/>
+                <Label fx:id="remotePreviewLabel" text="Keine alte Ausfuehrung ausgewaehlt." wrapText="true" styleClass="remote-preview"/>
+                <HBox styleClass="remote-actions">
+                    <Button fx:id="exportRemoteChatButton" text="TXT exportieren" disable="true" onAction="#exportRemoteChat"/>
+                    <Button fx:id="deleteRemoteChatButton" text="Loeschen" disable="true" styleClass="danger-button" onAction="#deleteRemoteChat"/>
                 </HBox>
-            </top>
-            <center>
-                <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" pannable="true" styleClass="messages-scroll-pane">
-                    <VBox fx:id="messagesBox" fillWidth="true" styleClass="messages-box"/>
-                </ScrollPane>
-            </center>
-            <bottom>
-                <HBox styleClass="composer">
-                    <TextArea fx:id="inputArea" promptText="Nachricht eingeben" wrapText="true" onKeyPressed="#handleInputKeyPressed" HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="sendButton" text="Senden" styleClass="send-button" onAction="#sendMessage"/>
-                </HBox>
-            </bottom>
-        </BorderPane>
+                <Label fx:id="remoteStatusLabel" text="n8n-Verwaltung wird vorbereitet" wrapText="true" styleClass="remote-status"/>
+            </VBox>
+        </SplitPane>
     </center>
 </BorderPane>

@@ -6,11 +6,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-public record AppConfig(String aiEndpoint, String aiApiKey, String aiModel, String chatDirectory) {
+public record AppConfig(
+        String aiEndpoint,
+        String aiApiKey,
+        String aiModel,
+        String chatDirectory,
+        String n8nAdminBaseUrl,
+        String n8nAdminToken
+) {
     private static final String LOCAL_CONFIG_PATH = "config/local.properties";
     private static final String DEFAULT_AI_HOST = "localhost";
-    private static final String DEFAULT_AI_PORT = "8000";
-    private static final String DEFAULT_AI_PATH = "/chat";
+    private static final String DEFAULT_AI_PORT = "11435";
+    private static final String DEFAULT_AI_PATH = "/api/chat";
+    private static final String DEFAULT_AI_MODEL = "mistral-rag:latest";
     private static final String DEFAULT_CHAT_DIRECTORY = "chats";
 
     public static AppConfig load() {
@@ -26,8 +34,10 @@ public record AppConfig(String aiEndpoint, String aiApiKey, String aiModel, Stri
         return new AppConfig(
                 endpoint,
                 value("ki.apiKey", "KI_API_KEY", properties, ""),
-                value("ki.model", "KI_MODEL", properties, ""),
-                value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY)
+                value("ki.model", "KI_MODEL", properties, DEFAULT_AI_MODEL),
+                value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY),
+                n8nAdminBaseUrl(properties),
+                value("n8n.chatAdmin.token", "N8N_CHAT_ADMIN_TOKEN", properties, "")
         );
     }
 
@@ -70,6 +80,24 @@ public record AppConfig(String aiEndpoint, String aiApiKey, String aiModel, Stri
             path = "/" + path;
         }
         return "http://" + host + ":" + port + path;
+    }
+
+    private static String n8nAdminBaseUrl(Properties properties) {
+        String baseUrl = value("n8n.chatAdmin.baseUrl", "N8N_CHAT_ADMIN_BASE_URL", properties, "");
+        if (!baseUrl.isBlank()) {
+            return stripTrailingSlash(baseUrl);
+        }
+
+        String host = value("n8n.host", "N8N_HOST", properties, value("ki.host", "KI_HOST", properties, DEFAULT_AI_HOST));
+        String port = value("n8n.chatAdmin.port", "N8N_CHAT_ADMIN_PORT", properties, "8088");
+        return "http://" + host + ":" + port;
+    }
+
+    private static String stripTrailingSlash(String value) {
+        while (value.endsWith("/")) {
+            value = value.substring(0, value.length() - 1);
+        }
+        return value;
     }
 
     private static String value(String propertyKey, String envKey, Properties properties, String defaultValue) {

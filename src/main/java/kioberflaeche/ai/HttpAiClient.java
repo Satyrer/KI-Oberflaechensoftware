@@ -59,6 +59,7 @@ public class HttpAiClient implements AiClient {
         if (!model.isBlank()) {
             json.append("\"model\":\"").append(escape(model)).append("\",");
         }
+        json.append("\"stream\":false,");
         json.append("\"message\":\"").append(escape(userMessage)).append("\",");
         json.append("\"messages\":[");
         for (int i = 0; i < history.size(); i++) {

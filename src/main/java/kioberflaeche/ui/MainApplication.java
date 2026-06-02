@@ -5,6 +5,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.ai.AiClient;
 import kioberflaeche.ai.HttpAiClient;
 import kioberflaeche.config.AppConfig;
@@ -18,7 +19,8 @@ public class MainApplication extends Application {
         AppConfig config = AppConfig.load();
         AiClient aiClient = new HttpAiClient(config.aiEndpoint(), config.aiApiKey(), config.aiModel());
         ChatStore chatStore = new ChatStore(Path.of(config.chatDirectory()));
-        ChatView chatView = new ChatView(aiClient, chatStore);
+        N8nChatAdminClient chatAdminClient = new N8nChatAdminClient(config.n8nAdminBaseUrl(), config.n8nAdminToken());
+        ChatView chatView = new ChatView(aiClient, chatStore, chatAdminClient);
 
         Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
         double width = Math.min(Math.max(980, screenBounds.getWidth() * 0.85), screenBounds.getWidth());

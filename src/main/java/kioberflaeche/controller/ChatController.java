@@ -16,6 +16,8 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import kioberflaeche.admin.ChatExecution;
+import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.ai.AiClient;
 import kioberflaeche.model.ChatMessage;
 import kioberflaeche.storage.ChatSession;
@@ -30,7 +32,9 @@ public class ChatController {
 
     private final AiClient aiClient;
     private final ChatStore chatStore;
+    private final N8nChatAdminClient chatAdminClient;
     private final ObservableList<ChatSession> sessions = FXCollections.observableArrayList();
+    private final ObservableList<ChatExecution> remoteExecutions = FXCollections.observableArrayList();
 
     @FXML
     private ListView<ChatSession> chatListView;
@@ -46,12 +50,25 @@ public class ChatController {
     private Label titleLabel;
     @FXML
     private Label statusLabel;
+    @FXML
+    private ListView<ChatExecution> remoteChatListView;
+    @FXML
+    private Label remotePreviewLabel;
+    @FXML
+    private Button refreshRemoteChatsButton;
+    @FXML
+    private Button exportRemoteChatButton;
+    @FXML
+    private Button deleteRemoteChatButton;
+    @FXML
+    private Label remoteStatusLabel;
 
     private ChatSession activeSession;
 
-    public ChatController(AiClient aiClient, ChatStore chatStore) {
+    public ChatController(AiClient aiClient, ChatStore chatStore, N8nChatAdminClient chatAdminClient) {
         this.aiClient = aiClient;
         this.chatStore = chatStore;
+        this.chatAdminClient = chatAdminClient;
     }
 
     @FXML
@@ -70,6 +87,24 @@ public class ChatController {
                 renderMessages();
             }
         });
+
+        remoteChatListView.setItems(remoteExecutions);
+        remoteChatListView.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(ChatExecution execution, boolean empty) {
+                super.updateItem(execution, empty);
+                setText(empty || execution == null ? null : execution.displayTitle());
+            }
+        });
+        remoteChatListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, execution) -> {
+            boolean selected = execution != null;
+            exportRemoteChatButton.setDisable(!selected);
+            deleteRemoteChatButton.setDisable(!selected);
+            remotePreviewLabel.setText(selected ? execution.preview() : "Keine alte Ausfuehrung ausgewaehlt.");
+        });
+        boolean adminConfigured = chatAdminClient.isConfigured();
+        refreshRemoteChatsButton.setDisable(!adminConfigured);
+        remoteStatusLabel.setText(adminConfigured ? "n8n-Verwaltung bereit" : "n8n-Token oder URL fehlt");
 
         loadSessions();
     }
@@ -135,6 +170,95 @@ public class ChatController {
         }
     }
 
+    @FXML
+    private void refreshRemoteChats() {
+        if (!chatAdminClient.isConfigured()) {
+            remoteStatusLabel.setText("n8n-Token oder URL fehlt");
+            return;
+        }
+
+        setRemoteActionsDisabled(true);
+        remoteStatusLabel.setText("Lade n8n-Chats...");
+        Thread.startVirtualThread(() -> {
+            try {
+                List<ChatExecution> executions = chatAdminClient.listChats();
+                Platform.runLater(() -> {
+                    remoteExecutions.setAll(executions);
+                    remoteStatusLabel.setText(executions.size() + " alte n8n-Ausfuehrungen gefunden");
+                    setRemoteActionsDisabled(false);
+                });
+            } catch (IOException | InterruptedException e) {
+                Platform.runLater(() -> {
+                    remoteStatusLabel.setText("n8n-Verwaltung nicht erreichbar");
+                    setRemoteActionsDisabled(false);
+                    showError("n8n-Chats konnten nicht geladen werden", e);
+                });
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void exportRemoteChat() {
+        ChatExecution execution = remoteChatListView.getSelectionModel().getSelectedItem();
+        if (execution == null) {
+            return;
+        }
+
+        setRemoteActionsDisabled(true);
+        remoteStatusLabel.setText("Exportiere n8n-Chat " + execution.id() + "...");
+        Thread.startVirtualThread(() -> {
+            try {
+                chatAdminClient.exportChat(execution.id());
+                Platform.runLater(() -> {
+                    remoteStatusLabel.setText("Export in der VM wurde erstellt");
+                    setRemoteActionsDisabled(false);
+                });
+            } catch (IOException | InterruptedException e) {
+                Platform.runLater(() -> {
+                    remoteStatusLabel.setText("Export fehlgeschlagen");
+                    setRemoteActionsDisabled(false);
+                    showError("n8n-Chat konnte nicht exportiert werden", e);
+                });
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
+
+    @FXML
+    private void deleteRemoteChat() {
+        ChatExecution execution = remoteChatListView.getSelectionModel().getSelectedItem();
+        if (execution == null) {
+            return;
+        }
+
+        setRemoteActionsDisabled(true);
+        remoteStatusLabel.setText("Loesche n8n-Chat " + execution.id() + "...");
+        Thread.startVirtualThread(() -> {
+            try {
+                chatAdminClient.deleteChat(execution.id());
+                Platform.runLater(() -> {
+                    remoteExecutions.remove(execution);
+                    remoteStatusLabel.setText("n8n-Chat wurde geloescht");
+                    setRemoteActionsDisabled(false);
+                });
+            } catch (IOException | InterruptedException e) {
+                Platform.runLater(() -> {
+                    remoteStatusLabel.setText("Loeschen fehlgeschlagen");
+                    setRemoteActionsDisabled(false);
+                    showError("n8n-Chat konnte nicht geloescht werden", e);
+                });
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
+
     private void loadSessions() {
         try {
             sessions.setAll(chatStore.loadAll());
@@ -192,6 +316,13 @@ public class ChatController {
         inputArea.setDisable(sending);
         sendButton.setText(sending ? "Warte..." : "Senden");
         statusLabel.setText(sending ? "KI antwortet..." : "Bereit");
+    }
+
+    private void setRemoteActionsDisabled(boolean disabled) {
+        refreshRemoteChatsButton.setDisable(disabled || !chatAdminClient.isConfigured());
+        ChatExecution selected = remoteChatListView.getSelectionModel().getSelectedItem();
+        exportRemoteChatButton.setDisable(disabled || selected == null);
+        deleteRemoteChatButton.setDisable(disabled || selected == null);
     }
 
     private void saveSession(ChatSession session) {
