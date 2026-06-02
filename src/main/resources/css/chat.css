@@ -215,3 +215,46 @@
 .button {
     -fx-cursor: hand;
 }
+
+.context-menu {
+    -fx-background-color: #171b26;
+    -fx-border-color: #334155;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+}
+
+.menu-item {
+    -fx-padding: 8px 14px;
+}
+
+.menu-item .label {
+    -fx-text-fill: #e5e7eb;
+}
+
+.menu-item:focused {
+    -fx-background-color: #263041;
+}
+
+.dialog-pane {
+    -fx-background-color: #171b26;
+    -fx-padding: 18px;
+}
+
+.dialog-pane .label {
+    -fx-text-fill: #cbd5e1;
+}
+
+.dialog-title {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.dialog-pane .text-field {
+    -fx-control-inner-background: #0f1117;
+    -fx-text-fill: #f8fafc;
+    -fx-prompt-text-fill: #64748b;
+    -fx-border-color: #334155;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}

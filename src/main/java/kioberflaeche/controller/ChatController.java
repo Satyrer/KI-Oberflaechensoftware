@@ -7,15 +7,24 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.Scene;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 import kioberflaeche.admin.ChatExecution;
 import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.ai.AiClient;
@@ -23,9 +32,12 @@ import kioberflaeche.model.ChatMessage;
 import kioberflaeche.storage.ChatSession;
 import kioberflaeche.storage.ChatStore;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 public class ChatController {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
@@ -79,6 +91,12 @@ public class ChatController {
             protected void updateItem(ChatSession session, boolean empty) {
                 super.updateItem(session, empty);
                 setText(empty || session == null ? null : session.title());
+                setContextMenu(empty || session == null ? null : createLocalChatContextMenu(session));
+                setOnMousePressed(event -> {
+                    if (!isEmpty() && event.getButton() == MouseButton.SECONDARY) {
+                        chatListView.getSelectionModel().select(getItem());
+                    }
+                });
             }
         });
         chatListView.getSelectionModel().selectedItemProperty().addListener((observable, oldSession, newSession) -> {
@@ -141,6 +159,9 @@ public class ChatController {
         List<ChatMessage> historyBeforeAnswer = targetSession.messages();
         aiClient.ask(historyBeforeAnswer, userText)
                 .thenAccept(answer -> Platform.runLater(() -> {
+                    if (!sessions.contains(targetSession)) {
+                        return;
+                    }
                     targetSession.add(ChatMessage.Sender.ASSISTANT, answer);
                     saveSession(targetSession);
                     chatListView.refresh();
@@ -151,6 +172,9 @@ public class ChatController {
                 }))
                 .exceptionally(error -> {
                     Platform.runLater(() -> {
+                        if (!sessions.contains(targetSession)) {
+                            return;
+                        }
                         targetSession.add(ChatMessage.Sender.SYSTEM, "Fehler bei der KI-Anbindung: " + error.getMessage());
                         saveSession(targetSession);
                         if (targetSession == activeSession) {
@@ -274,6 +298,105 @@ public class ChatController {
         }
     }
 
+    private ContextMenu createLocalChatContextMenu(ChatSession session) {
+        MenuItem exportItem = new MenuItem("Chat exportieren");
+        exportItem.setOnAction(event -> openExportWindow(session));
+
+        MenuItem deleteItem = new MenuItem("Chat loeschen");
+        deleteItem.setOnAction(event -> confirmAndDeleteChat(session));
+
+        return new ContextMenu(exportItem, deleteItem);
+    }
+
+    private void confirmAndDeleteChat(ChatSession session) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.initOwner(ownerWindow());
+        alert.setTitle("Chat loeschen");
+        alert.setHeaderText("Chat wirklich loeschen?");
+        alert.setContentText("Der Chat \"" + session.title() + "\" wird lokal aus dem Speicherordner entfernt.");
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.OK) {
+            return;
+        }
+
+        try {
+            chatStore.delete(session);
+            sessions.remove(session);
+            if (sessions.isEmpty()) {
+                startNewChat();
+            } else {
+                chatListView.getSelectionModel().selectFirst();
+            }
+            statusLabel.setText("Chat geloescht.");
+        } catch (IOException e) {
+            showError("Chat konnte nicht geloescht werden", e);
+        }
+    }
+
+    private void openExportWindow(ChatSession session) {
+        Stage stage = new Stage();
+        stage.setTitle("Chat exportieren");
+        Window owner = ownerWindow();
+        if (owner != null) {
+            stage.initOwner(owner);
+        }
+
+        Label title = new Label("Chat exportieren");
+        title.getStyleClass().add("dialog-title");
+        Label description = new Label("Waehle einen Zielordner fuer \"" + session.title() + "\".");
+        description.setWrapText(true);
+
+        TextField targetField = new TextField();
+        targetField.setPromptText("Zielordner auswaehlen");
+        Button chooseButton = new Button("Ordner waehlen");
+        Button exportButton = new Button("Exportieren");
+        Button cancelButton = new Button("Abbrechen");
+        exportButton.getStyleClass().add("send-button");
+
+        chooseButton.setOnAction(event -> {
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setTitle("Zielordner fuer Chat-Export waehlen");
+            File selectedDirectory = chooser.showDialog(stage);
+            if (selectedDirectory != null) {
+                targetField.setText(selectedDirectory.getAbsolutePath());
+            }
+        });
+        cancelButton.setOnAction(event -> stage.close());
+        exportButton.setOnAction(event -> exportChatToSelectedDirectory(session, targetField, stage));
+
+        HBox pathRow = new HBox(8, targetField, chooseButton);
+        targetField.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(targetField, javafx.scene.layout.Priority.ALWAYS);
+        HBox actions = new HBox(8, exportButton, cancelButton);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox root = new VBox(12, title, description, pathRow, actions);
+        root.getStyleClass().add("dialog-pane");
+        Scene scene = new Scene(root, 520, 190);
+        scene.getStylesheets().add(getClass().getResource("/css/chat.css").toExternalForm());
+        stage.setScene(scene);
+        stage.setMinWidth(480);
+        stage.setMinHeight(190);
+        stage.show();
+    }
+
+    private void exportChatToSelectedDirectory(ChatSession session, TextField targetField, Stage stage) {
+        String targetPath = targetField.getText() == null ? "" : targetField.getText().trim();
+        if (targetPath.isBlank()) {
+            statusLabel.setText("Bitte zuerst einen Zielordner waehlen.");
+            return;
+        }
+
+        try {
+            Path exportedPath = chatStore.export(session, Path.of(targetPath));
+            statusLabel.setText("Chat exportiert: " + exportedPath);
+            stage.close();
+        } catch (IOException e) {
+            showError("Chat konnte nicht exportiert werden", e);
+        }
+    }
+
     private void renderMessages() {
         messagesBox.getChildren().clear();
         titleLabel.setText(activeSession == null ? "KI Chat" : activeSession.title());
@@ -335,9 +458,17 @@ public class ChatController {
 
     private void showError(String title, Exception exception) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.initOwner(ownerWindow());
         alert.setTitle("Fehler");
         alert.setHeaderText(title);
         alert.setContentText(exception.getMessage());
         alert.showAndWait();
+    }
+
+    private Window ownerWindow() {
+        if (chatListView != null && chatListView.getScene() != null) {
+            return chatListView.getScene().getWindow();
+        }
+        return null;
     }
 }

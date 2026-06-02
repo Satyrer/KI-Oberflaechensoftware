@@ -39,6 +39,21 @@ public class ChatStore {
 
     public void save(ChatSession session) throws IOException {
         ensureDirectory();
+        Files.writeString(pathFor(session), serialize(session), StandardCharsets.UTF_8);
+    }
+
+    public Path export(ChatSession session, Path targetDirectory) throws IOException {
+        Files.createDirectories(targetDirectory);
+        Path target = uniqueExportPath(session, targetDirectory);
+        Files.writeString(target, serialize(session), StandardCharsets.UTF_8);
+        return target;
+    }
+
+    public void delete(ChatSession session) throws IOException {
+        Files.deleteIfExists(pathFor(session));
+    }
+
+    private String serialize(ChatSession session) {
         StringBuilder text = new StringBuilder();
         text.append("CHAT_ID: ").append(session.id()).append(System.lineSeparator());
         text.append("TITLE: ").append(session.title()).append(System.lineSeparator());
@@ -52,7 +67,30 @@ public class ChatStore {
             text.append("<<<END>>>").append(System.lineSeparator()).append(System.lineSeparator());
         }
 
-        Files.writeString(directory.resolve(session.id() + ".txt"), text.toString(), StandardCharsets.UTF_8);
+        return text.toString();
+    }
+
+    private Path pathFor(ChatSession session) {
+        return directory.resolve(session.id() + ".txt");
+    }
+
+    private Path uniqueExportPath(ChatSession session, Path targetDirectory) throws IOException {
+        String baseName = sanitizeFileName(session.title().isBlank() ? "Chat" : session.title());
+        if (baseName.isBlank()) {
+            baseName = "Chat";
+        }
+
+        Path target = targetDirectory.resolve(baseName + ".txt");
+        int counter = 2;
+        while (Files.exists(target)) {
+            target = targetDirectory.resolve(baseName + "-" + counter + ".txt");
+            counter++;
+        }
+        return target;
+    }
+
+    private String sanitizeFileName(String value) {
+        return value.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
     }
 
     private ChatSession loadUnchecked(Path path) {
