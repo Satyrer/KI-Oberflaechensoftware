@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="KI Chat starten" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="kioberflaeche.Main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <module name="KI-Oberflaechensoftware" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
