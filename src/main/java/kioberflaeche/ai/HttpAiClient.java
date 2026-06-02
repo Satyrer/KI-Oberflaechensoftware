@@ -14,27 +14,31 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 public class HttpAiClient implements AiClient {
-    private static final Duration TIMEOUT = Duration.ofSeconds(45);
-
     private final HttpClient client;
     private final URI endpoint;
     private final String apiKey;
     private final String model;
+    private final Duration timeout;
 
     public HttpAiClient(String endpoint, String apiKey, String model) {
+        this(endpoint, apiKey, model, 120);
+    }
+
+    public HttpAiClient(String endpoint, String apiKey, String model, int timeoutSeconds) {
         this.client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         this.endpoint = URI.create(endpoint);
         this.apiKey = apiKey == null ? "" : apiKey;
         this.model = model == null ? "" : model;
+        this.timeout = Duration.ofSeconds(Math.max(1, timeoutSeconds));
     }
 
     @Override
     public CompletableFuture<String> ask(List<ChatMessage> history, String userMessage) {
         String payload = buildPayload(history, userMessage);
         HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
-                .timeout(TIMEOUT)
+                .timeout(timeout)
                 .header("Content-Type", "application/json; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8));
 

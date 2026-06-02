@@ -24,7 +24,12 @@ public class MainApplication extends Application {
     @Override
     public void start(Stage primaryStage) {
         AppConfig config = AppConfig.load();
-        AiClient aiClient = new HttpAiClient(config.aiEndpoint(), config.aiApiKey(), config.aiModel());
+        AiClient aiClient = new HttpAiClient(
+                config.aiEndpoint(),
+                config.aiApiKey(),
+                config.aiModel(),
+                config.aiTimeoutSeconds()
+        );
         ChatStore chatStore = new ChatStore(Path.of(config.chatDirectory()));
         N8nChatAdminClient chatAdminClient = new N8nChatAdminClient(config.n8nAdminBaseUrl(), config.n8nAdminToken());
         ChatView chatView = new ChatView(aiClient, chatStore, chatAdminClient);

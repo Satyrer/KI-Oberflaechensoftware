@@ -12,6 +12,7 @@ ki.path=/api/chat
 # Optional credentials and model selection for the local AI service.
 ki.apiKey=
 ki.model=mistral-rag:latest
+ki.timeoutSeconds=120
 
 # Current local AI stack / n8n chat administration.
 n8n.host=192.168.178.41

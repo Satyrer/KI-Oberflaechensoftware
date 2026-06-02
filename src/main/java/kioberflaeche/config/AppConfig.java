@@ -10,6 +10,7 @@ public record AppConfig(
         String aiEndpoint,
         String aiApiKey,
         String aiModel,
+        int aiTimeoutSeconds,
         String chatDirectory,
         String n8nAdminBaseUrl,
         String n8nAdminToken
@@ -35,6 +36,7 @@ public record AppConfig(
                 endpoint,
                 value("ki.apiKey", "KI_API_KEY", properties, ""),
                 value("ki.model", "KI_MODEL", properties, DEFAULT_AI_MODEL),
+                intValue("ki.timeoutSeconds", "KI_TIMEOUT_SECONDS", properties, 120),
                 value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY),
                 n8nAdminBaseUrl(properties),
                 value("n8n.chatAdmin.token", "N8N_CHAT_ADMIN_TOKEN", properties, "")
@@ -117,5 +119,30 @@ public record AppConfig(
         }
 
         return defaultValue;
+    }
+
+    private static int intValue(String propertyKey, String envKey, Properties properties, int defaultValue) {
+        String rawValue = value(propertyKey, envKey, properties, String.valueOf(defaultValue));
+        try {
+            return Math.max(1, Integer.parseInt(rawValue));
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "AppConfig[aiEndpoint=" + aiEndpoint
+                + ", aiApiKey=" + mask(aiApiKey)
+                + ", aiModel=" + aiModel
+                + ", aiTimeoutSeconds=" + aiTimeoutSeconds
+                + ", chatDirectory=" + chatDirectory
+                + ", n8nAdminBaseUrl=" + n8nAdminBaseUrl
+                + ", n8nAdminToken=" + mask(n8nAdminToken)
+                + "]";
+    }
+
+    private String mask(String value) {
+        return value == null || value.isBlank() ? "" : "***";
     }
 }

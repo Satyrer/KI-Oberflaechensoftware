@@ -99,3 +99,18 @@ Ohne VM-Start aktuell offen lassen. Beim naechsten geplanten Start:
 3. Kurzer `POST /api/chat` mit `stream=false`.
 4. n8n-Chatverwaltung mit lokalem Token pruefen.
 5. Falls Chat wieder timed out: Ollama- und Gateway-Logs lesen, bevor die Java-Oberflaeche geaendert wird.
+
+## Nachpruefung 2026-06-03
+
+Die VM wurde spaeter wieder gestartet und vorsichtig erneut geprueft:
+
+- VMware meldete die laufende VM `n8n Server.vmx`.
+- Gast-IP blieb `192.168.178.41`.
+- `11435` fuer den Ollama-Gateway war von Windows erreichbar.
+- `8088` fuer die n8n-Chatverwaltung war von Windows erreichbar.
+- `GET /api/tags` am Gateway lieferte weiterhin `mistral-rag:latest`, `nomic-embed-text:latest` und `mistral:latest`.
+- Die n8n-Chatverwaltung antwortete mit lokalem Token erfolgreich.
+- Ein vorsichtiger `POST /api/chat` mit kurzer Antwortbegrenzung lieferte `OK`.
+- Der direkte Java-Clienttest mit `HttpAiClient` und lokaler `AppConfig` lieferte ebenfalls `OK`.
+
+Die Oberflaeche ist damit fuer den aktuellen VM-Stand korrekt verkabelt. Der KI-Timeout ist konfigurierbar und steht standardmaessig auf `120` Sekunden, damit kalte Modellstarts nicht zu knapp abgewuergt werden.
