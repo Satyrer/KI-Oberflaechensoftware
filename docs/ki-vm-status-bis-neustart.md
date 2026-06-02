@@ -113,4 +113,4 @@ Die VM wurde spaeter wieder gestartet und vorsichtig erneut geprueft:
 - Ein vorsichtiger `POST /api/chat` mit kurzer Antwortbegrenzung lieferte `OK`.
 - Der direkte Java-Clienttest mit `HttpAiClient` und lokaler `AppConfig` lieferte ebenfalls `OK`.
 
-Die Oberflaeche ist damit fuer den aktuellen VM-Stand korrekt verkabelt. Der KI-Timeout ist konfigurierbar und steht standardmaessig auf `120` Sekunden, damit kalte Modellstarts nicht zu knapp abgewuergt werden.
+Die Oberflaeche ist damit fuer den aktuellen VM-Stand korrekt verkabelt. Der KI-Timeout ist konfigurierbar und steht standardmaessig auf `300` Sekunden, damit normale Antworten bis zu fuenf Minuten laufen duerfen und haengende Generierungen danach sauber abbrechen.

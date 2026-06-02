@@ -36,7 +36,7 @@ public record AppConfig(
                 endpoint,
                 value("ki.apiKey", "KI_API_KEY", properties, ""),
                 value("ki.model", "KI_MODEL", properties, DEFAULT_AI_MODEL),
-                intValue("ki.timeoutSeconds", "KI_TIMEOUT_SECONDS", properties, 120),
+                intValue("ki.timeoutSeconds", "KI_TIMEOUT_SECONDS", properties, 300),
                 value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY),
                 n8nAdminBaseUrl(properties),
                 value("n8n.chatAdmin.token", "N8N_CHAT_ADMIN_TOKEN", properties, "")

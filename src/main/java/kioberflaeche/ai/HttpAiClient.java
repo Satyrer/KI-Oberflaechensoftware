@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 public class HttpAiClient implements AiClient {
     private final HttpClient client;
@@ -21,7 +22,7 @@ public class HttpAiClient implements AiClient {
     private final Duration timeout;
 
     public HttpAiClient(String endpoint, String apiKey, String model) {
-        this(endpoint, apiKey, model, 120);
+        this(endpoint, apiKey, model, 300);
     }
 
     public HttpAiClient(String endpoint, String apiKey, String model, int timeoutSeconds) {
@@ -54,7 +55,23 @@ public class HttpAiClient implements AiClient {
                     }
                     return extractAnswer(response.body())
                             .orElseThrow(() -> new AiRequestException("KI-Antwort konnte nicht gelesen werden: " + response.body()));
+                })
+                .exceptionally(error -> {
+                    Throwable cause = unwrap(error);
+                    if (cause instanceof java.net.http.HttpTimeoutException) {
+                        throw new AiRequestException("KI-Anfrage nach " + timeout.toSeconds()
+                                + " Sekunden abgebrochen. Die Generierung hat vermutlich gehaengt oder zu lange gedauert.");
+                    }
+                    throw new CompletionException(cause);
                 });
+    }
+
+    private Throwable unwrap(Throwable error) {
+        Throwable current = error;
+        while (current instanceof CompletionException && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current;
     }
 
     private String buildPayload(List<ChatMessage> history, String userMessage) {
