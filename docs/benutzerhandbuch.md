@@ -15,6 +15,9 @@ Die Oberflaeche bietet:
 - Anbindung an den Ollama-Gateway der KI-VM
 - Zugriff auf die n8n-Chatverwaltung fuer alte n8n-Ausfuehrungen
 - Export und Loeschen alter n8n-Chat-Ausfuehrungen
+- Import von n8n-WebUI-Chats aus `/home/chat`
+- lokaler Import von Markdown-Anhaengen in den jeweiligen Chatordner
+- finales Loeschen eines einzeln ausgewaehlten n8n-WebUI-Chats
 
 Die Anwendung speichert Zugangsdaten und lokale Pfade nicht im Git-Repository. Diese Werte liegen in der lokalen Datei `config/local.properties`.
 
@@ -71,6 +74,7 @@ Wichtige Felder:
 
 ```properties
 ki.endpoint=
+ki.provider=ollama
 ki.host=192.168.178.41
 ki.port=11435
 ki.path=/api/chat
@@ -82,11 +86,32 @@ n8n.host=192.168.178.41
 n8n.chatAdmin.port=8088
 n8n.chatAdmin.baseUrl=
 n8n.chatAdmin.token=
+n8n.web.port=5678
+n8n.web.baseUrl=
+n8n.web.email=
+n8n.web.password=
+n8n.chatWebhook.url=
+n8n.chatWebhook.authorization=
 
 chat.directory=chats
 ```
 
 ### KI-Endpunkt
+
+`ki.provider` steuert, wie Antworten erzeugt werden:
+
+- `ollama`: direkte Anfrage an den Ollama-/Mistral-Gateway
+- `n8n`: Anfrage an einen n8n Chat Trigger Webhook
+
+Fuer die n8n-Variante muss im Chat Trigger des Workflows `Make Chat Publicly Available` aktiv sein. Danach die im Node angezeigte `Chat URL` in `config/local.properties` setzen:
+
+```properties
+ki.provider=n8n
+n8n.chatWebhook.url=http://SERVER_IP:5678/webhook/DEINE-CHAT-URL
+n8n.chatWebhook.authorization=
+```
+
+Wenn der Chat Trigger Authentifizierung verwendet, kann `n8n.chatWebhook.authorization` einen kompletten Authorization-Header-Wert enthalten, zum Beispiel `Basic ...` oder `Bearer ...`.
 
 Wenn `ki.endpoint` leer ist, baut die Anwendung den Endpunkt aus Host, Port und Pfad:
 
@@ -161,6 +186,21 @@ Elemente:
 - Statusanzeige
 
 Dieser Bereich funktioniert nur, wenn die KI-VM laeuft und `n8n.chatAdmin.token` korrekt gesetzt ist.
+
+### Rechter Bereich: n8n WebUI Chats
+
+Der zweite rechte Bereich liest die n8n-WebUI-Chats aus der Ansicht `/home/chat`.
+
+Elemente:
+
+- `WebUI-Chats laden`
+- Liste der WebUI-Chats
+- WebUI-Vorschau
+- `Lokal importieren`
+- `Final loeschen`
+- Statusanzeige
+
+Diese Funktionen verwenden die normale n8n-WebUI auf Port `5678`. Dafuer muessen `n8n.web.email` und `n8n.web.password` in `config/local.properties` gesetzt sein.
 
 ## 6. Lokale Chats Nutzen
 
@@ -280,7 +320,60 @@ Falls Binaerdateien referenziert sind, werden sie ebenfalls in einen Unterordner
 
 Das Loeschen entfernt die n8n-Ausfuehrung aus der Datenbank der VM. Diese Funktion ist deshalb deutlich staerker als das Loeschen eines lokalen Java-Chats.
 
-## 9. Speicherformat Lokaler Chats
+## 9. n8n WebUI Chats Importieren Und Loeschen
+
+Die n8n-WebUI-Chats sind die Chats aus:
+
+```text
+http://SERVER_IP:5678/home/chat
+```
+
+Sie werden nicht ueber die alte n8n-Chatverwaltung auf Port `8088` geladen, sondern ueber die authentifizierte n8n-WebUI-API.
+
+### Zugangsdaten Setzen
+
+In `config/local.properties` muessen lokal gesetzt sein:
+
+```properties
+n8n.web.port=5678
+n8n.web.baseUrl=
+n8n.web.email=DEINE_N8N_EMAIL
+n8n.web.password=DEIN_N8N_PASSWORT
+```
+
+Wenn `n8n.web.baseUrl` leer bleibt, nutzt die Anwendung `n8n.host` und `n8n.web.port`.
+
+### WebUI-Chats Laden
+
+1. Sicherstellen, dass die KI-VM und n8n laufen.
+2. Rechts in der WebUI-Sektion auf `WebUI-Chats laden` klicken.
+3. Die Anwendung meldet die Anzahl gefundener Chats.
+
+### WebUI-Chat Lokal Importieren
+
+1. Einen WebUI-Chat auswaehlen.
+2. Auf `Lokal importieren` klicken.
+3. Der Chat erscheint links in der lokalen Chatliste.
+
+Der n8n-Chat bleibt beim Import in n8n erhalten.
+
+Markdown-Anhaenge werden, sofern n8n sie ueber die Chat-API bereitstellt, im lokalen Chatordner abgelegt:
+
+```text
+chats/CHAT-ID/
+chats/CHAT-ID/chat.txt
+chats/CHAT-ID/ANHANG.md
+```
+
+### WebUI-Chat Final Loeschen
+
+1. Einen WebUI-Chat auswaehlen.
+2. Auf `Final loeschen` klicken.
+3. Den Bestaetigungsdialog bestaetigen.
+
+Geloescht wird nur der aktuell ausgewaehlte WebUI-Chat. Bereits lokal importierte Chatordner bleiben erhalten.
+
+## 10. Speicherformat Lokaler Chats
 
 Lokale Chats werden als TXT-Dateien im Ordner `chats/` gespeichert.
 
@@ -310,7 +403,9 @@ Antwort
 
 Der Ordner `chats/` ist in `.gitignore` eingetragen.
 
-## 10. Sicherheit Und Git
+Importierte n8n-WebUI-Chats koennen als eigener Ordner unter `chats/` liegen. Die Anwendung liest sowohl alte flache TXT-Dateien als auch diese Chatordner.
+
+## 11. Sicherheit Und Git
 
 Folgende Daten duerfen nicht ins Git:
 
@@ -324,7 +419,7 @@ Folgende Daten duerfen nicht ins Git:
 
 Die Anwendung maskiert Tokens in der Konfigurationsausgabe. Trotzdem sollte die lokale Konfigurationsdatei nicht geteilt werden.
 
-## 11. Typische Fehlerbilder
+## 12. Typische Fehlerbilder
 
 ### Fehler: KI antwortet nicht
 
