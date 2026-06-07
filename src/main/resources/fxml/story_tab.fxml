@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<SplitPane xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.StoryPaneController" dividerPositions="0.33,0.68" styleClass="content-split">
+    <VBox styleClass="story-pane">
+        <Label text="Story-Schichten" styleClass="remote-admin-title"/>
+        <Label text="Arbeitsprojekte bleiben lokal im SchreibAI-Arbeitsplatz. Das Template bleibt als Beispiel erhalten." wrapText="true" styleClass="remote-admin-help"/>
+        <Label text="Arbeitsplatz" styleClass="remote-section-title"/>
+        <HBox spacing="8">
+            <TextField fx:id="storyWorkspaceField" editable="false" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseStoryWorkspaceButton" text="Waehlen"/>
+        </HBox>
+        <Label text="Projekt" styleClass="remote-section-title"/>
+        <ComboBox fx:id="storyProjectComboBox" maxWidth="Infinity"/>
+        <Button fx:id="refreshStoryProjectsButton" text="Projekte aktualisieren" maxWidth="Infinity"/>
+        <Label text="Ausgabesprache" styleClass="remote-section-title"/>
+        <ComboBox fx:id="storyOutputLanguageComboBox" maxWidth="Infinity"/>
+        <Button fx:id="synthesizeStoryButton" text="Vorhandenen Entwurf synthetisieren" maxWidth="Infinity" styleClass="send-button"/>
+        <Button fx:id="recoverStoryTempButton" text="Zwischenstand laden" maxWidth="Infinity"/>
+        <Button fx:id="refreshStoryFilesButton" text="Schichten laden" maxWidth="Infinity"/>
+        <ListView fx:id="storyFileListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
+        <Label text="Dateipfad" styleClass="remote-section-title"/>
+        <TextField fx:id="storyPathField" promptText="manuscript/chapter-01.md"/>
+        <Label fx:id="storyStatusLabel" text="Schreib-AI Workflow wird vorbereitet" wrapText="true" styleClass="remote-status"/>
+    </VBox>
+    <VBox styleClass="story-pane">
+        <Label text="Geschichte anlegen" styleClass="remote-admin-title"/>
+        <GridPane hgap="8" vgap="8">
+            <Label text="Titel" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="storyTitleField" promptText="Arbeitstitel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="Genre" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="storyGenreField" promptText="Fantasy, Thriller ..." GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Hauptfigur" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <TextField fx:id="storyProtagonistField" promptText="Name" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Startort" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <TextField fx:id="storySettingField" promptText="Ort, Welt, Milieu" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            <Label text="Ton" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <TextField fx:id="storyToneField" promptText="dicht, schnell, duester ..." GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+        </GridPane>
+        <Label text="Praemisse" styleClass="remote-section-title"/>
+        <TextArea fx:id="storyPremiseArea" promptText="Grundidee der Geschichte" wrapText="true" prefRowCount="4"/>
+        <Label text="Zentraler Konflikt" styleClass="remote-section-title"/>
+        <TextArea fx:id="storyConflictArea" promptText="Was steht im Weg?" wrapText="true" prefRowCount="4"/>
+        <Button fx:id="createStoryButton" text="Story-Schichten anlegen" maxWidth="Infinity" styleClass="send-button"/>
+
+        <Label text="Dokument / Aenderung in Workflow laden" styleClass="remote-admin-title"/>
+        <HBox spacing="8">
+            <TextField fx:id="storyChapterField" promptText="Kapitel" HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="storyTimelineField" promptText="Timeline-Zeitpunkt" HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <TextArea fx:id="storyDocumentArea" promptText="Notiz, Szene, Expose oder Aenderung" wrapText="true" prefRowCount="5"/>
+        <Button fx:id="analyzeStoryDocumentButton" text="Analyseplan erstellen" maxWidth="Infinity"/>
+    </VBox>
+    <VBox styleClass="story-pane">
+        <Label text="Schreib-AI nutzen" styleClass="remote-admin-title"/>
+        <Label text="Die KI bekommt alle Schichten als Kontext und teilt die Fortsetzung in Teilschritte auf." wrapText="true" styleClass="remote-admin-help"/>
+        <Label text="Zieldatei" styleClass="remote-section-title"/>
+        <TextField fx:id="storyTargetPathField" text="manuscript/chapter-01.md"/>
+        <Label text="Teilschritte" styleClass="remote-section-title"/>
+        <TextField fx:id="storyStepsField" text="5"/>
+        <Label text="Auftrag" styleClass="remote-section-title"/>
+        <TextArea fx:id="storyContinuePromptArea" promptText="Schreibe die erste Szene und beachte Timeline, Figurenwissen und offene Fragen." wrapText="true" prefRowCount="6"/>
+        <Button fx:id="continueStoryButton" text="Fortsetzung mit Kontext planen" maxWidth="Infinity" styleClass="send-button"/>
+        <Label text="Ausgewaehlte Story-Datei" styleClass="remote-section-title"/>
+        <TextArea fx:id="storyFileContentArea" wrapText="true" prefRowCount="10" VBox.vgrow="ALWAYS"/>
+        <HBox spacing="8">
+            <Button fx:id="saveStoryFileButton" text="Story-Datei speichern" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="continueFromStoryFileButton" text="Aus Datei fortsetzen" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="send-button"/>
+        </HBox>
+        <HBox spacing="8">
+            <Button fx:id="promoteToFinalStoryButton" text="Ins Finale ueberfuehren" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="reviewFinalChapterButton" text="Finales Chapter reviewen" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <Label text="Workflow-Antwort" styleClass="remote-section-title"/>
+        <TextArea fx:id="storyWorkflowResultArea" editable="false" wrapText="true" prefRowCount="4"/>
+        <Label text="Aenderungen pruefen" styleClass="remote-admin-title"/>
+        <ListView fx:id="storyChangeListView" prefHeight="120" styleClass="remote-chat-list"/>
+        <HBox spacing="8">
+            <Button fx:id="applyStoryChangeButton" text="Auswahl uebernehmen" disable="true"/>
+            <Button fx:id="applyAllStoryChangesButton" text="Alle uebernehmen" disable="true"/>
+        </HBox>
+        <HBox spacing="8" VBox.vgrow="ALWAYS">
+            <VBox HBox.hgrow="ALWAYS" styleClass="merge-column">
+                <Label text="Original" styleClass="remote-section-title"/>
+                <TextArea fx:id="storyOriginalContentArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+            </VBox>
+            <VBox HBox.hgrow="ALWAYS" styleClass="merge-column">
+                <Label text="KI-Aenderung" styleClass="remote-section-title"/>
+                <TextArea fx:id="storyProposedContentArea" wrapText="true" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</SplitPane>

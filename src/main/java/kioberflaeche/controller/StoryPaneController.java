@@ -1,0 +1,52 @@
+package kioberflaeche.controller;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import kioberflaeche.story.StoryFile;
+import kioberflaeche.story.StoryProject;
+
+public class StoryPaneController {
+    @FXML public ListView<StoryFile> storyFileListView;
+    @FXML public TextField storyWorkspaceField;
+    @FXML public ComboBox<StoryProject> storyProjectComboBox;
+    @FXML public ComboBox<String> storyOutputLanguageComboBox;
+    @FXML public TextField storyPathField;
+    @FXML public TextArea storyFileContentArea;
+    @FXML public TextField storyTitleField;
+    @FXML public TextField storyGenreField;
+    @FXML public TextField storyProtagonistField;
+    @FXML public TextField storySettingField;
+    @FXML public TextField storyToneField;
+    @FXML public TextArea storyPremiseArea;
+    @FXML public TextArea storyConflictArea;
+    @FXML public TextField storyChapterField;
+    @FXML public TextField storyTimelineField;
+    @FXML public TextArea storyDocumentArea;
+    @FXML public TextField storyTargetPathField;
+    @FXML public TextField storyStepsField;
+    @FXML public TextArea storyContinuePromptArea;
+    @FXML public TextArea storyWorkflowResultArea;
+    @FXML public ListView storyChangeListView;
+    @FXML public TextArea storyOriginalContentArea;
+    @FXML public TextArea storyProposedContentArea;
+    @FXML public Label storyStatusLabel;
+    @FXML public Button refreshStoryFilesButton;
+    @FXML public Button refreshStoryProjectsButton;
+    @FXML public Button chooseStoryWorkspaceButton;
+    @FXML public Button saveStoryFileButton;
+    @FXML public Button continueFromStoryFileButton;
+    @FXML public Button promoteToFinalStoryButton;
+    @FXML public Button reviewFinalChapterButton;
+    @FXML public Button createStoryButton;
+    @FXML public Button synthesizeStoryButton;
+    @FXML public Button recoverStoryTempButton;
+    @FXML public Button analyzeStoryDocumentButton;
+    @FXML public Button continueStoryButton;
+    @FXML public Button applyStoryChangeButton;
+    @FXML public Button applyAllStoryChangesButton;
+}
