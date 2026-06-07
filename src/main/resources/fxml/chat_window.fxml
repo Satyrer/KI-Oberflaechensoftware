@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.SplitPane?>
@@ -20,39 +25,57 @@
         </VBox>
     </left>
     <center>
-        <SplitPane dividerPositions="0.72" styleClass="content-split">
-            <BorderPane styleClass="chat-pane">
-                <top>
-                    <HBox styleClass="chat-header">
-                        <Label fx:id="titleLabel" text="KI Chat" styleClass="chat-title"/>
-                        <Label fx:id="statusLabel" text="Bereit" styleClass="chat-status"/>
-                    </HBox>
-                </top>
-                <center>
-                    <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" pannable="true" styleClass="messages-scroll-pane">
-                        <VBox fx:id="messagesBox" fillWidth="true" styleClass="messages-box"/>
-                    </ScrollPane>
-                </center>
-                <bottom>
-                    <HBox styleClass="composer">
-                        <TextArea fx:id="inputArea" promptText="Nachricht eingeben" wrapText="true" onKeyPressed="#handleInputKeyPressed" HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="sendButton" text="Senden" styleClass="send-button" onAction="#sendMessage"/>
-                    </HBox>
-                </bottom>
-            </BorderPane>
-            <VBox styleClass="remote-admin-pane">
-                <Label text="n8n Chat-Verwaltung" styleClass="remote-admin-title"/>
-                <Label text="Alte Ausfuehrungen aus der aktuellen KI-VM laden, exportieren oder entfernen." wrapText="true" styleClass="remote-admin-help"/>
-                <Button fx:id="refreshRemoteChatsButton" text="Alte Chats laden" maxWidth="Infinity" onAction="#refreshRemoteChats"/>
-                <ListView fx:id="remoteChatListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
-                <Label text="Vorschau" styleClass="remote-section-title"/>
-                <Label fx:id="remotePreviewLabel" text="Keine alte Ausfuehrung ausgewaehlt." wrapText="true" styleClass="remote-preview"/>
-                <HBox styleClass="remote-actions">
-                    <Button fx:id="exportRemoteChatButton" text="TXT exportieren" disable="true" onAction="#exportRemoteChat"/>
-                    <Button fx:id="deleteRemoteChatButton" text="Loeschen" disable="true" styleClass="danger-button" onAction="#deleteRemoteChat"/>
-                </HBox>
-                <Label fx:id="remoteStatusLabel" text="n8n-Verwaltung wird vorbereitet" wrapText="true" styleClass="remote-status"/>
-            </VBox>
-        </SplitPane>
+        <TabPane styleClass="main-tabs" tabClosingPolicy="UNAVAILABLE">
+            <Tab text="KI Chat">
+                <SplitPane dividerPositions="0.72" styleClass="content-split">
+                    <BorderPane styleClass="chat-pane">
+                        <top>
+                            <HBox styleClass="chat-header">
+                                <Label fx:id="titleLabel" text="KI Chat" styleClass="chat-title"/>
+                                <Label fx:id="statusLabel" text="Bereit" styleClass="chat-status"/>
+                            </HBox>
+                        </top>
+                        <center>
+                            <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" pannable="true" styleClass="messages-scroll-pane">
+                                <VBox fx:id="messagesBox" fillWidth="true" styleClass="messages-box"/>
+                            </ScrollPane>
+                        </center>
+                        <bottom>
+                            <HBox styleClass="composer">
+                                <TextArea fx:id="inputArea" promptText="Nachricht eingeben" wrapText="true" onKeyPressed="#handleInputKeyPressed" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="sendButton" text="Senden" styleClass="send-button" onAction="#sendMessage"/>
+                            </HBox>
+                        </bottom>
+                    </BorderPane>
+                    <VBox styleClass="remote-admin-pane">
+                        <Label text="n8n Chat-Verwaltung" styleClass="remote-admin-title"/>
+                        <Label text="Alte Ausfuehrungen aus der aktuellen KI-VM laden, exportieren oder entfernen." wrapText="true" styleClass="remote-admin-help"/>
+                        <Button fx:id="refreshRemoteChatsButton" text="Alte Chats laden" maxWidth="Infinity" onAction="#refreshRemoteChats"/>
+                        <ListView fx:id="remoteChatListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
+                        <Label text="Vorschau" styleClass="remote-section-title"/>
+                        <Label fx:id="remotePreviewLabel" text="Keine alte Ausfuehrung ausgewaehlt." wrapText="true" styleClass="remote-preview"/>
+                        <HBox styleClass="remote-actions">
+                            <Button fx:id="exportRemoteChatButton" text="TXT exportieren" disable="true" onAction="#exportRemoteChat"/>
+                            <Button fx:id="deleteRemoteChatButton" text="Loeschen" disable="true" styleClass="danger-button" onAction="#deleteRemoteChat"/>
+                        </HBox>
+                        <Label fx:id="remoteStatusLabel" text="n8n-Verwaltung wird vorbereitet" wrapText="true" styleClass="remote-status"/>
+                        <Label text="n8n WebUI Chats" styleClass="remote-admin-title"/>
+                        <Label text="Chats aus /home/chat laden, lokal importieren oder einzeln final aus n8n entfernen." wrapText="true" styleClass="remote-admin-help"/>
+                        <Button fx:id="refreshWebChatsButton" text="WebUI-Chats laden" maxWidth="Infinity" onAction="#refreshWebChats"/>
+                        <ListView fx:id="webChatListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
+                        <Label text="WebUI-Vorschau" styleClass="remote-section-title"/>
+                        <Label fx:id="webPreviewLabel" text="Kein WebUI-Chat ausgewaehlt." wrapText="true" styleClass="remote-preview"/>
+                        <HBox styleClass="remote-actions">
+                            <Button fx:id="importWebChatButton" text="Lokal importieren" disable="true" onAction="#importWebChat"/>
+                            <Button fx:id="deleteWebChatButton" text="Final loeschen" disable="true" styleClass="danger-button" onAction="#deleteWebChat"/>
+                        </HBox>
+                        <Label fx:id="webStatusLabel" text="n8n-WebUI-Import wird vorbereitet" wrapText="true" styleClass="remote-status"/>
+                    </VBox>
+                </SplitPane>
+            </Tab>
+            <Tab text="Story bauen">
+                <fx:include fx:id="storyTab" source="story_tab.fxml"/>
+            </Tab>
+        </TabPane>
     </center>
 </BorderPane>

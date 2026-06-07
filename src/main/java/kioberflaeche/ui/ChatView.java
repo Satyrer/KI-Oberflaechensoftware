@@ -3,21 +3,31 @@ package kioberflaeche.ui;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import kioberflaeche.admin.N8nChatAdminClient;
+import kioberflaeche.admin.N8nWebChatClient;
 import kioberflaeche.ai.AiClient;
 import kioberflaeche.controller.ChatController;
+import kioberflaeche.story.SchreibAiWorkflowClient;
 import kioberflaeche.storage.ChatStore;
 
 import java.io.IOException;
 
 public class ChatView {
     private final Parent view;
+    private ChatController controller;
 
-    public ChatView(AiClient aiClient, ChatStore chatStore, N8nChatAdminClient chatAdminClient) {
+    public ChatView(
+            AiClient aiClient,
+            ChatStore chatStore,
+            N8nChatAdminClient chatAdminClient,
+            N8nWebChatClient webChatClient,
+            SchreibAiWorkflowClient schreibAiClient
+    ) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/chat_window.fxml"));
             loader.setControllerFactory(type -> {
                 if (type == ChatController.class) {
-                    return new ChatController(aiClient, chatStore, chatAdminClient);
+                    controller = new ChatController(aiClient, chatStore, chatAdminClient, webChatClient, schreibAiClient);
+                    return controller;
                 }
                 try {
                     return type.getDeclaredConstructor().newInstance();
@@ -33,5 +43,9 @@ public class ChatView {
 
     public Parent getView() {
         return view;
+    }
+
+    public ChatController getController() {
+        return controller;
     }
 }

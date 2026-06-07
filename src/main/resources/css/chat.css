@@ -65,6 +65,34 @@
     -fx-background-color: #0f1117;
 }
 
+.main-tabs {
+    -fx-background-color: #0f1117;
+}
+
+.main-tabs .tab-header-area .tab-header-background {
+    -fx-background-color: #111827;
+}
+
+.main-tabs .tab {
+    -fx-background-color: #171b26;
+    -fx-background-radius: 8px 8px 0 0;
+    -fx-border-color: #263041;
+    -fx-border-width: 1px 1px 0 1px;
+}
+
+.main-tabs .tab:selected {
+    -fx-background-color: #263041;
+}
+
+.main-tabs .tab .tab-label {
+    -fx-text-fill: #cbd5e1;
+    -fx-font-weight: bold;
+}
+
+.main-tabs .tab:selected .tab-label {
+    -fx-text-fill: #f8fafc;
+}
+
 .content-split .split-pane-divider {
     -fx-background-color: #263041;
 }
@@ -160,6 +188,40 @@
     -fx-background-color: #171b26;
     -fx-padding: 16px;
     -fx-spacing: 10px;
+}
+
+.story-pane {
+    -fx-background-color: #171b26;
+    -fx-padding: 16px;
+    -fx-spacing: 10px;
+}
+
+.story-pane .label {
+    -fx-text-fill: #cbd5e1;
+}
+
+.story-pane .text-field,
+.story-pane .text-area,
+.story-pane .combo-box {
+    -fx-control-inner-background: #0f1117;
+    -fx-text-fill: #f8fafc;
+    -fx-prompt-text-fill: #64748b;
+    -fx-border-color: #334155;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+
+.story-pane .combo-box .list-cell {
+    -fx-background-color: #0f1117;
+    -fx-text-fill: #f8fafc;
+}
+
+.story-pane .text-area {
+    -fx-font-family: "Segoe UI", "Arial";
+}
+
+.merge-column {
+    -fx-spacing: 6px;
 }
 
 .remote-admin-title {
