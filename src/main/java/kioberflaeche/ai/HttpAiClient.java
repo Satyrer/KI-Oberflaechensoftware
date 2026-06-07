@@ -36,7 +36,7 @@ public class HttpAiClient implements AiClient {
     }
 
     @Override
-    public CompletableFuture<String> ask(List<ChatMessage> history, String userMessage) {
+    public CompletableFuture<String> ask(String sessionId, List<ChatMessage> history, String userMessage) {
         String payload = buildPayload(history, userMessage);
         HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
                 .timeout(timeout)

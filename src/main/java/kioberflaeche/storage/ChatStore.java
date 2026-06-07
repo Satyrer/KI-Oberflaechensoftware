@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +31,7 @@ public class ChatStore {
         ensureDirectory();
         try (Stream<Path> files = Files.list(directory)) {
             return files
-                    .filter(path -> path.getFileName().toString().endsWith(".txt"))
+                    .filter(this::isChatStorageEntry)
                     .sorted(Comparator.comparing(this::lastModified).reversed())
                     .map(this::loadUnchecked)
                     .toList();
@@ -39,7 +40,9 @@ public class ChatStore {
 
     public void save(ChatSession session) throws IOException {
         ensureDirectory();
-        Files.writeString(pathFor(session), serialize(session), StandardCharsets.UTF_8);
+        Path path = storagePathFor(session);
+        Path chatFile = Files.isDirectory(path) ? path.resolve("chat.txt") : path;
+        Files.writeString(chatFile, serialize(session), StandardCharsets.UTF_8);
     }
 
     public Path export(ChatSession session, Path targetDirectory) throws IOException {
@@ -49,8 +52,26 @@ public class ChatStore {
         return target;
     }
 
+    public Path saveInFolder(ChatSession session, List<StoredFile> files) throws IOException {
+        ensureDirectory();
+        Path folder = directory.resolve(sanitizeFileName(session.id()));
+        Files.createDirectories(folder);
+        Files.writeString(folder.resolve("chat.txt"), serialize(session), StandardCharsets.UTF_8);
+
+        for (StoredFile file : files) {
+            Path target = uniqueFilePath(folder, sanitizeFileName(file.fileName()));
+            Files.write(target, file.content());
+        }
+        return folder;
+    }
+
     public void delete(ChatSession session) throws IOException {
-        Files.deleteIfExists(pathFor(session));
+        Path path = storagePathFor(session);
+        if (Files.isDirectory(path)) {
+            deleteDirectory(path);
+        } else {
+            Files.deleteIfExists(path);
+        }
     }
 
     private String serialize(ChatSession session) {
@@ -70,7 +91,11 @@ public class ChatStore {
         return text.toString();
     }
 
-    private Path pathFor(ChatSession session) {
+    private Path storagePathFor(ChatSession session) {
+        Path folder = directory.resolve(sanitizeFileName(session.id()));
+        if (Files.isRegularFile(folder.resolve("chat.txt"))) {
+            return folder;
+        }
         return directory.resolve(session.id() + ".txt");
     }
 
@@ -89,6 +114,21 @@ public class ChatStore {
         return target;
     }
 
+    private Path uniqueFilePath(Path targetDirectory, String fileName) throws IOException {
+        Files.createDirectories(targetDirectory);
+        String safeName = fileName == null || fileName.isBlank() ? "datei.md" : fileName;
+        Path target = targetDirectory.resolve(safeName);
+        int dot = safeName.lastIndexOf('.');
+        String name = dot > 0 ? safeName.substring(0, dot) : safeName;
+        String extension = dot > 0 ? safeName.substring(dot) : "";
+        int counter = 2;
+        while (Files.exists(target)) {
+            target = targetDirectory.resolve(name + "-" + counter + extension);
+            counter++;
+        }
+        return target;
+    }
+
     private String sanitizeFileName(String value) {
         return value.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
     }
@@ -102,7 +142,8 @@ public class ChatStore {
     }
 
     private ChatSession load(Path path) throws IOException {
-        List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+        Path chatFile = Files.isDirectory(path) ? path.resolve("chat.txt") : path;
+        List<String> lines = Files.readAllLines(chatFile, StandardCharsets.UTF_8);
         String id = valueAfter(lines, "CHAT_ID: ", fallbackId(path));
         String title = valueAfter(lines, "TITLE: ", "Chat");
         ChatSession session = new ChatSession(id, title);
@@ -155,5 +196,23 @@ public class ChatStore {
 
     private void ensureDirectory() throws IOException {
         Files.createDirectories(directory);
+    }
+
+    private boolean isChatStorageEntry(Path path) {
+        String fileName = path.getFileName().toString();
+        return fileName.endsWith(".txt") || Files.isRegularFile(path.resolve("chat.txt"));
+    }
+
+    private void deleteDirectory(Path folder) throws IOException {
+        List<Path> paths = new ArrayList<>();
+        try (Stream<Path> stream = Files.walk(folder)) {
+            stream.sorted(Comparator.reverseOrder()).forEach(paths::add);
+        }
+        for (Path path : paths) {
+            Files.deleteIfExists(path);
+        }
+    }
+
+    public record StoredFile(String fileName, byte[] content) {
     }
 }

@@ -44,7 +44,7 @@ public class ChatSession {
         }
     }
 
-    void addLoaded(ChatMessage message) {
+    public void addLoaded(ChatMessage message) {
         messages.add(message);
     }
 }
