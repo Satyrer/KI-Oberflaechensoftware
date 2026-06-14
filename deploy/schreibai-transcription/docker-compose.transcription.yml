@@ -1,0 +1,25 @@
+services:
+  media-transcription-worker:
+    build:
+      context: ./services/media-transcription-worker
+    container_name: eigene-ai-media-transcription-worker
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      - PORT=8091
+      - ASR_MODEL=${ASR_MODEL:-small}
+      - ASR_DEVICE=${ASR_DEVICE:-cpu}
+      - ASR_COMPUTE_TYPE=${ASR_COMPUTE_TYPE:-int8}
+      - ASR_DEFAULT_LANGUAGE=${ASR_DEFAULT_LANGUAGE:-de}
+      - OLLAMA_BASE_URL=http://ollama-gateway:11434
+      - OLLAMA_CHAT_MODEL=${OLLAMA_CHAT_MODEL:-mistral-rag:latest}
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-180}
+    volumes:
+      - transcription_models:/models
+      - ./exports:/exports
+    depends_on:
+      - ollama-gateway
+
+volumes:
+  transcription_models:

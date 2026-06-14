@@ -1,0 +1,112 @@
+{
+  "id": "SchreibAiTranscription001",
+  "name": "SchreibAI Media Transcription",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/transcribe",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryData": true
+        }
+      },
+      "id": "7b95fd2e-6b75-4a84-90a1-74f09d5572d0",
+      "name": "Transkriptions-Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        260,
+        260
+      ],
+      "webhookId": "a6d3b9c2-27ef-4c85-9b07-transcribe001"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json || {};\nconst allowedLanguages = new Set(['auto', 'de', 'en', 'fr', 'es', 'it', 'pt', 'nl', 'pl', 'tr', 'ru', 'uk', 'ja', 'ko', 'zh']);\nconst languageAliases = { deutsch: 'de', german: 'de', englisch: 'en', english: 'en', automatisch: 'auto', automatic: 'auto' };\nconst rawLanguage = String(body.language || body.transcriptionLanguage || body.transcription_language || 'de').trim().toLowerCase();\nconst language = allowedLanguages.has(languageAliases[rawLanguage] || rawLanguage) ? (languageAliases[rawLanguage] || rawLanguage) : 'de';\nconst rawMode = String(body.outputMode || body.output_mode || body.responseFormat || body.response_format || body.format || 'structured').trim().toLowerCase();\nconst outputMode = ['plain', 'text', 'txt', 'raw', 'plain_text'].includes(rawMode) ? 'plain' : 'structured';\nconst binaryKey = item.binary?.file ? 'file' : Object.keys(item.binary || {})[0];\nif (!binaryKey) {\n  throw new Error('Keine Datei im Multipart-Feld file gefunden.');\n}\nconst binary = item.binary[binaryKey];\nconst buffer = await this.helpers.getBinaryDataBuffer(0, binaryKey);\nconst payload = {\n  language,\n  outputMode,\n  filename: binary.fileName || binary.filename || 'audio.bin',\n  data: buffer.toString('base64'),\n  notes: body.notes || body.metadata || '',\n};\nfor (let index = 1; index <= 8; index++) {\n  for (const prefix of ['speakerName', 'narratorVoice']) {\n    const value = body[`${prefix}${index}`] || body[`${prefix}_${index}`];\n    if (value) payload[`${prefix}${index}`] = value;\n  }\n}\nreturn [{ json: payload }];"
+      },
+      "id": "16a917c6-1328-40d2-9508-d2fd7a0da891",
+      "name": "Upload vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://media-transcription-worker:8091/transcribe",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {
+          "timeout": 1800000
+        }
+      },
+      "id": "ba5cb360-2dd5-4cc8-bfe3-f84a22ab72ed",
+      "name": "Worker transkribiert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{($json.mode || '').toLowerCase() === 'plain' ? ($json.plainText || $json.transcript || '') : JSON.stringify($json, null, 2)}}",
+        "options": {}
+      },
+      "id": "00518c7c-af0b-4cf8-b65c-9ce91610f04c",
+      "name": "TXT antworten",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1020,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Transkriptions-Webhook": {
+      "main": [
+        [
+          {
+            "node": "Upload vorbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload vorbereiten": {
+      "main": [
+        [
+          {
+            "node": "Worker transkribiert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Worker transkribiert": {
+      "main": [
+        [
+          {
+            "node": "TXT antworten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
