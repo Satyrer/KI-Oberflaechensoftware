@@ -1,0 +1,478 @@
+{
+  "name": "youtube.com/@mschrot",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Add your file here",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "File",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cddddd7a-b4fa-4132-b908-4cf7c5b40f54",
+      "name": "On form submission",
+      "type": "n8n-nodes-base.formTrigger",
+      "position": [
+        96,
+        736
+      ],
+      "webhookId": "5f348218-db44-4dbb-a164-e0f4d284542e",
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "rag_collection"
+        },
+        "options": {}
+      },
+      "id": "72b4d524-f110-4b96-a5a1-c89d67068cc3",
+      "name": "Qdrant Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "position": [
+        384,
+        736
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "qdrantApi": {
+          "id": "GFQJ76AJtw5Jj3Th",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "e443ae75-136e-4e48-8063-9f35a5f5352f",
+      "name": "Embeddings Ollama",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "position": [
+        192,
+        944
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "ollamaApi": {
+          "id": "74plNGSKxqi2ENGg",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "id": "3d70b513-ff0b-47e2-a34a-ee4b786d7593",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        464,
+        944
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chunkSize": 200,
+        "chunkOverlap": 50,
+        "options": {}
+      },
+      "id": "c14902af-3b56-4187-a6fd-6640b039526c",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        464,
+        1184
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+        "height": 732,
+        "width": 1000,
+        "color": 4
+      },
+      "id": "915daf9d-9665-4904-b1ce-6e7dc79fad7a",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        624
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b810ac97-74f2-4a8f-8a26-3177ffa907a3",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        1232,
+        752
+      ],
+      "webhookId": "5e56a263-3a40-44bd-bc9d-1cfb3bc2a87d",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful assistant. You have access to a tool to retrieve data from a semantic database to answer questions. Always provide arguments when you execute the tool"
+        }
+      },
+      "id": "6b6b3dc5-5237-4a70-93a9-fc1a4e2733e1",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1504,
+        752
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "model": "mistral-rag:latest",
+        "options": {}
+      },
+      "id": "aafa97d7-cd65-48dc-a59e-6d700ec9f318",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "position": [
+        1344,
+        992
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "ollamaApi": {
+          "id": "74plNGSKxqi2ENGg",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 3
+      },
+      "id": "984e2efa-71fd-4e0b-9797-ef220088bef3",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1552,
+        992
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "retriever",
+        "toolDescription": "Retrieve data from a semantic database to answer questions",
+        "topK": 4,
+        "qdrantCollection": {
+          "__rl": true,
+          "mode": "id",
+          "value": "rag_collection"
+        },
+        "options": {}
+      },
+      "id": "1fbf58ed-2902-4ed9-b3fb-98fb9512e333",
+      "name": "Qdrant Vector Store1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "position": [
+        1824,
+        1024
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "qdrantApi": {
+          "id": "GFQJ76AJtw5Jj3Th",
+          "name": "QdrantApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "nomic-embed-text:latest"
+      },
+      "id": "aacf5463-9dbc-4cad-a7db-6818c38fa410",
+      "name": "Embeddings Ollama1",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "position": [
+        1744,
+        1216
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "ollamaApi": {
+          "id": "74plNGSKxqi2ENGg",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 732,
+        "width": 1328,
+        "color": 5
+      },
+      "id": "e0649804-8395-48fd-8638-d984ca73ff4b",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        784,
+        624
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "\n🔴 PDF Ingestion  \n• On form submission  \n  ⚡ Formular startet den Prozess  \n\n• Default Data Loader  \n  📄 PDF laden & Text extrahieren  \n\n• Text Splitter  \n  ✂️ Text in kleine Teile zerlegen  \n\n• Embeddings Ollama  \n  🧠 Text → Vektoren umwandeln  \n\n• Qdrant Vector Store  \n  💾 Vektoren speichern  \n",
+        "height": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -160,
+        960
+      ],
+      "typeVersion": 1,
+      "id": "923b102a-045a-4d22-96f5-d28be65bd4c5",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "🟢 RAG Chatbot  \n• When chat message received  \n  💬 Start bei neuer Nachricht  \n\n• AI Agent  \n  🤖 Steuert die Verarbeitung  \n\n• Ollama Chat Model  \n  🗣️ Generiert Antworten  \n\n• Simple Memory  \n  🧩 Speichert Kontext  \n\n• Qdrant Vector Store  \n  🔍 Sucht relevante Daten  \n\n• Embeddings Ollama  \n  🧠 Anfrage → Vektoren  \n",
+        "height": 384
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        704
+      ],
+      "typeVersion": 1,
+      "id": "d8265b2b-e853-40c7-8020-d77c0020f89a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Tutorial Deutsch\nChannel:\nYouTube.com/@mschrot\nGithub:\nhttps://github.com/mschrot/n8n",
+        "height": 144
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        1152
+      ],
+      "typeVersion": 1,
+      "id": "1592fe18-7406-430f-905f-b0c11e6af0cd",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ki/chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "77ad561c-d081-4c09-b8de-8f080b862bd1",
+      "name": "KI Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        520
+      ],
+      "webhookId": "1470f5d3-0294-4541-b360-d5d9e7a7414b"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "01019f66-b442-4f22-a8de-2b7addc42f6b",
+      "name": "Return KI Chat Answer",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1904,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{ json: { ...body, chatInput: body.chatInput || body.message || body.text || \"\", sessionId: body.sessionId || body.session_id || \"java-chat\" } }];"
+      },
+      "id": "0698ca39-fdd3-45f5-91e6-00d65452ba80",
+      "name": "Normalize KI Chat Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        520
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Qdrant Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Qdrant Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qdrant Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KI Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize KI Chat Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Return KI Chat Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize KI Chat Input": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "869589ab-e843-4c5b-acce-611600957cd5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eda8b106b6d95b3189242181a68261e583dd3342f176ac0f5bc6570707099fb6"
+  },
+  "id": "SoDihdwgsRqCSWqv",
+  "tags": []
+}

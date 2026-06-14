@@ -1,0 +1,845 @@
+{
+  "id": "SchreibAiReview001",
+  "name": "Schreib-AI Review Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/analyze",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d95b5d8a-50d9-4917-a2d2-df6f4203fc1f",
+      "name": "Schreib-AI Analyze Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        280
+      ],
+      "webhookId": "56c7845b-0edc-4b93-a05a-1e92f93f9f8a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/analyze-change",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {}
+      },
+      "id": "a2916e6a-67b8-4e7c-8597-c79219347d74",
+      "name": "Create Review Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "ec3d0b77-8f05-46da-9491-9b7a02112d7d",
+      "name": "Return Review Plan",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/accept",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "58fb0679-a674-4d74-a585-c037d37bc650",
+      "name": "Schreib-AI Accept Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        560
+      ],
+      "webhookId": "2768ab5f-ed7a-4beb-980e-505cde0b53b5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/accept-updates",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {}
+      },
+      "id": "a2b17c56-8c88-4dd2-9d75-20a77493041c",
+      "name": "Apply Approved Updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "bae6fa15-c05b-4e12-bb9c-d48f1780fab1",
+      "name": "Return Apply Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Schreib-AI Review, Story-Verwaltung und Qdrant Memory\n\nPOST /webhook/schreib-ai/analyze fuer Dokumente/Aenderungen.\n\nPOST /webhook/schreib-ai/accept fuer freigegebene Updates; der Worker synchronisiert geaenderte Dateien nach Qdrant.\n\nPOST /webhook/schreib-ai/story mit action list/read/write/append/context/qdrant_sync/qdrant_search fuer lokale Story-Dateien und Memory.\n\nPOST /webhook/schreib-ai/continue baut Kontext aus lokalen Schichten plus Qdrant-Retrieval.\n\nPOST /webhook/schreib-ai/qdrant-sync reindiziert die Story-Memory in Qdrant.\n\nPOST /webhook/schreib-ai/qdrant-search sucht gezielt in der Story-Memory.",
+        "height": 520,
+        "width": 520
+      },
+      "id": "ae9f7fd2-9153-4bb2-85a5-fbd317cd4dfa",
+      "name": "Workflow Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -120
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/story",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9a6f9ff4-e7aa-4a3f-a527-1f58aac32905",
+      "name": "Schreib-AI Story Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        820
+      ],
+      "webhookId": "0a38e98c-28c1-496f-962c-df42254399fb"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/story-action",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {}
+      },
+      "id": "6ad70041-7677-493b-acd9-e62017dd6a7d",
+      "name": "Story File Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "deab5e13-19c6-4eaf-978d-a98e024a177d",
+      "name": "Return Story Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/continue",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "34e6be86-fb3f-4bee-8237-45eba37126d0",
+      "name": "Schreib-AI Continue Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1100
+      ],
+      "webhookId": "b753f00b-bf84-4065-9b65-f99d6981e189"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/continue-story",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "id": "49fe811e-e54b-4040-ac2b-462235418fc3",
+      "name": "Build Continue Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "bd29bc97-b5e8-4f13-a956-0e6fb2975a7e",
+      "name": "Return Continue Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Du bist der Schreib-AI Writer Agent. Nutze den vom Worker gelieferten Schicht-Kontext. Schreibe keine Dateien direkt. Gib Teilschritte, Kontinuitaetspruefung, Manuskriptvorschlag und vorgeschlagene Updates strukturiert aus."
+        }
+      },
+      "id": "d8a2bbd5-a9e6-4384-a6bc-0d579693aa84",
+      "name": "Schreib-AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "model": "mistral-rag:latest",
+        "options": {}
+      },
+      "id": "b81dcf6a-6089-47dc-9009-70c20b2cb44e",
+      "name": "Schreib-AI Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        680,
+        1320
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "74plNGSKxqi2ENGg",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 3
+      },
+      "id": "988a4e38-b55a-45e8-88d8-61f1f760fd31",
+      "name": "Schreib-AI Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/finalize-generation",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ generated_text: $json.output || $json.text || $json.response || $json.answer || $json, projectId: $node[\"Build Continue Context\"].json.projectId, outputLanguage: $node[\"Build Continue Context\"].json.outputLanguage, target: $node[\"Build Continue Context\"].json.target, chapter: $node[\"Build Continue Context\"].json.chapter, timeline_date: $node[\"Build Continue Context\"].json.timeline_date, context_files: $node[\"Build Continue Context\"].json.context_files }) }}",
+        "options": {}
+      },
+      "id": "8d97e66d-a782-41fd-9c7d-86ecf00b9dbe",
+      "name": "Create Continue Review Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/synthesize",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "7bc28c3c-6f71-4f5f-9874-4a52292af801",
+      "name": "Schreib-AI Synthesize Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1560
+      ],
+      "webhookId": "4d5a41f1-3a5e-4564-a49c-7d2ddf4cf1d0"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/run-synthesis",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "id": "2f68420e-e80c-4d40-b66b-8e751f869671",
+      "name": "Run Synthesis Worker",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://ollama-gateway:11434/api/generate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: \"mistral-rag:latest\", prompt: $json.chatInput, stream: false, options: { temperature: 0.2, num_predict: 4096 } }) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "id": "93623958-b168-41e7-a7e6-62db2845d7bd",
+      "name": "Run Synthesis Ollama",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "onError": "continueRegularOutput",
+      "position": [
+        800,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "Du bist der Schreib-AI Synthese-Agent. Analysiere Manuskriptquellen in Subroutinen fuer Coreference, Figuren, Orte, Timeline, Weltwissen und Konsistenz. Loese Pronomen wie she/he/sie/er auf konkrete Figuren auf. Gib ausschliesslich valides JSON gemaess Prompt zurueck, damit der Worker lokale Schichtdateien schreiben kann."
+        }
+      },
+      "id": "361e30bd-4566-4102-86cf-7cb11bbddf0d",
+      "name": "Schreib-AI Synthesis Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 2
+      },
+      "id": "be6fa4a9-82e0-4b26-ad2e-2ac6e85f1738",
+      "name": "Schreib-AI Synthesis Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        900,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/finalize-synthesis",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ generated_text: $json.output || $json.text || $json.response || $json.answer || $json, projectId: $node[\"Run Synthesis Worker\"].json.projectId, outputLanguage: $node[\"Run Synthesis Worker\"].json.outputLanguage, source_files: $node[\"Run Synthesis Worker\"].json.source_files, source_chunks: $node[\"Run Synthesis Worker\"].json.source_chunks }) }}",
+        "options": {}
+      },
+      "id": "93efb7dc-083d-45cc-987d-73fbd2af5d95",
+      "name": "Finalize Synthesis Files",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1080,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "fa872a3f-e456-4691-9e36-8a5f1334e577",
+      "name": "Return Synthesis Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1340,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/finalize",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "77a7a6bb-finalize-webhook",
+      "name": "Schreib-AI Finalize Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        1880
+      ],
+      "webhookId": "77a7a6bb-38e9-4de6-8cd6-finalstory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/finalize-chapter",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "id": "4b75a55c-finalize-chapter",
+      "name": "Finalize Chapter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        1880
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "22d87287-return-finalize",
+      "name": "Return Finalize Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        1880
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/qdrant-sync",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "8b4a4b77-qdrant-sync-webhook",
+      "name": "Schreib-AI Qdrant Sync Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        2160
+      ],
+      "webhookId": "8b4a4b77-18f0-4f34-b1d9-qdrantsync"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/qdrant-sync",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {
+          "timeout": 900000
+        }
+      },
+      "id": "c0b12345-run-qdrant-sync",
+      "name": "Run Qdrant Memory Sync",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        2160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "f0d23456-return-qdrant-sync",
+      "name": "Return Qdrant Sync Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        2160
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "schreib-ai/qdrant-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "9c5d5c88-qdrant-search-webhook",
+      "name": "Schreib-AI Qdrant Search Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        2400
+      ],
+      "webhookId": "9c5d5c88-18f0-4f34-b1d9-qdrantsearch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/qdrant-search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "id": "d1c34567-run-qdrant-search",
+      "name": "Run Qdrant Memory Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "a2e45678-return-qdrant-search",
+      "name": "Return Qdrant Search Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        800,
+        2400
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schreib-AI Analyze Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Review Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Review Plan": {
+      "main": [
+        [
+          {
+            "node": "Return Review Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Accept Webhook": {
+      "main": [
+        [
+          {
+            "node": "Apply Approved Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apply Approved Updates": {
+      "main": [
+        [
+          {
+            "node": "Return Apply Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Story Webhook": {
+      "main": [
+        [
+          {
+            "node": "Story File Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Story File Action": {
+      "main": [
+        [
+          {
+            "node": "Return Story Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Continue Webhook": {
+      "main": [
+        [
+          {
+            "node": "Build Continue Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Continue Context": {
+      "main": [
+        [
+          {
+            "node": "Return Continue Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create Continue Review Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Continue Review Plan": {
+      "main": [
+        [
+          {
+            "node": "Return Continue Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Synthesize Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Synthesis Worker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Synthesis Ollama": {
+      "main": [
+        [
+          {
+            "node": "Finalize Synthesis Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Synthesis Agent": {
+      "main": [
+        [
+          {
+            "node": "Finalize Synthesis Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Synthesis Files": {
+      "main": [
+        [
+          {
+            "node": "Return Synthesis Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Schreib-AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Schreib-AI Synthesis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Schreib-AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Synthesis Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Schreib-AI Synthesis Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Finalize Webhook": {
+      "main": [
+        [
+          {
+            "node": "Finalize Chapter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Chapter": {
+      "main": [
+        [
+          {
+            "node": "Return Finalize Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Synthesis Worker": {
+      "main": [
+        [
+          {
+            "node": "Return Synthesis Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Qdrant Sync Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Qdrant Memory Sync",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Qdrant Memory Sync": {
+      "main": [
+        [
+          {
+            "node": "Return Qdrant Sync Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schreib-AI Qdrant Search Webhook": {
+      "main": [
+        [
+          {
+            "node": "Run Qdrant Memory Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Qdrant Memory Search": {
+      "main": [
+        [
+          {
+            "node": "Return Qdrant Search Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6b8d31c7-6630-4d04-b8ce-07730214ea44",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
