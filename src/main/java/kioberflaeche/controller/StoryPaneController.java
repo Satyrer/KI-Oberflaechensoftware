@@ -44,6 +44,7 @@ public class StoryPaneController {
     @FXML public Button reviewFinalChapterButton;
     @FXML public Button createStoryButton;
     @FXML public Button synthesizeStoryButton;
+    @FXML public Button syncQdrantMemoryButton;
     @FXML public Button recoverStoryTempButton;
     @FXML public Button analyzeStoryDocumentButton;
     @FXML public Button continueStoryButton;

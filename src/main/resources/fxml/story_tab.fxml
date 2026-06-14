@@ -25,6 +25,7 @@
         <Label text="Ausgabesprache" styleClass="remote-section-title"/>
         <ComboBox fx:id="storyOutputLanguageComboBox" maxWidth="Infinity"/>
         <Button fx:id="synthesizeStoryButton" text="Vorhandenen Entwurf synthetisieren" maxWidth="Infinity" styleClass="send-button"/>
+        <Button fx:id="syncQdrantMemoryButton" text="Memory in Qdrant speichern" maxWidth="Infinity"/>
         <Button fx:id="recoverStoryTempButton" text="Zwischenstand laden" maxWidth="Infinity"/>
         <Button fx:id="refreshStoryFilesButton" text="Schichten laden" maxWidth="Infinity"/>
         <ListView fx:id="storyFileListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>

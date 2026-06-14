@@ -26,8 +26,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import kioberflaeche.admin.ChatExecution;
-import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.admin.N8nWebChatClient;
 import kioberflaeche.admin.WebChatSummary;
 import kioberflaeche.ai.AiClient;
@@ -43,6 +41,7 @@ import kioberflaeche.util.SimpleJson;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -50,7 +49,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
-import java.util.Objects;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -60,17 +58,15 @@ import java.util.Properties;
 public class ChatController {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
     private static final String DEFAULT_STORY_WORKSPACE = "F:\\Virtuelle Maschinenen\\SchreibAI\\Arbeitsprojekte";
-    private static final int STORY_SYNTHESIS_CHUNK_CHARS = 2400;
     private static final String STORY_SYNTHESIS_STATE_FILE = ".schreib-ai-synthesis.properties";
     private static final String STORY_SYNTHESIS_SNAPSHOT_DIR = ".schreib-ai-snapshots";
+    private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
 
     private final AiClient aiClient;
     private final ChatStore chatStore;
-    private final N8nChatAdminClient chatAdminClient;
     private final N8nWebChatClient webChatClient;
     private final SchreibAiWorkflowClient schreibAiClient;
     private final ObservableList<ChatSession> sessions = FXCollections.observableArrayList();
-    private final ObservableList<ChatExecution> remoteExecutions = FXCollections.observableArrayList();
     private final ObservableList<WebChatSummary> webChats = FXCollections.observableArrayList();
     private final ObservableList<StoryProject> storyProjects = FXCollections.observableArrayList();
     private final ObservableList<StoryFile> storyFiles = FXCollections.observableArrayList();
@@ -90,18 +86,6 @@ public class ChatController {
     private Label titleLabel;
     @FXML
     private Label statusLabel;
-    @FXML
-    private ListView<ChatExecution> remoteChatListView;
-    @FXML
-    private Label remotePreviewLabel;
-    @FXML
-    private Button refreshRemoteChatsButton;
-    @FXML
-    private Button exportRemoteChatButton;
-    @FXML
-    private Button deleteRemoteChatButton;
-    @FXML
-    private Label remoteStatusLabel;
     @FXML
     private ListView<WebChatSummary> webChatListView;
     @FXML
@@ -183,6 +167,8 @@ public class ChatController {
     @FXML
     private Button synthesizeStoryButton;
     @FXML
+    private Button syncQdrantMemoryButton;
+    @FXML
     private Button recoverStoryTempButton;
     @FXML
     private Button analyzeStoryDocumentButton;
@@ -216,13 +202,11 @@ public class ChatController {
     public ChatController(
             AiClient aiClient,
             ChatStore chatStore,
-            N8nChatAdminClient chatAdminClient,
             N8nWebChatClient webChatClient,
             SchreibAiWorkflowClient schreibAiClient
     ) {
         this.aiClient = aiClient;
         this.chatStore = chatStore;
-        this.chatAdminClient = chatAdminClient;
         this.webChatClient = webChatClient;
         this.schreibAiClient = schreibAiClient;
     }
@@ -249,24 +233,6 @@ public class ChatController {
                 renderMessages();
             }
         });
-
-        remoteChatListView.setItems(remoteExecutions);
-        remoteChatListView.setCellFactory(listView -> new ListCell<>() {
-            @Override
-            protected void updateItem(ChatExecution execution, boolean empty) {
-                super.updateItem(execution, empty);
-                setText(empty || execution == null ? null : execution.displayTitle());
-            }
-        });
-        remoteChatListView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, execution) -> {
-            boolean selected = execution != null;
-            exportRemoteChatButton.setDisable(!selected);
-            deleteRemoteChatButton.setDisable(!selected);
-            remotePreviewLabel.setText(selected ? execution.preview() : "Keine alte Ausfuehrung ausgewaehlt.");
-        });
-        boolean adminConfigured = chatAdminClient.isConfigured();
-        refreshRemoteChatsButton.setDisable(!adminConfigured);
-        remoteStatusLabel.setText(adminConfigured ? "n8n-Verwaltung bereit" : "n8n-Token oder URL fehlt");
 
         webChatListView.setItems(webChats);
         webChatListView.setCellFactory(listView -> new ListCell<>() {
@@ -304,9 +270,8 @@ public class ChatController {
             }
         });
         storyOutputLanguageComboBox.setItems(FXCollections.observableArrayList(
-                "Automatisch aus Projekt erkennen",
-                "Deutsch",
-                "Englisch"
+                "Englisch",
+                "Deutsch"
         ));
         storyOutputLanguageComboBox.getSelectionModel().selectFirst();
 
@@ -393,6 +358,7 @@ public class ChatController {
         reviewFinalChapterButton = storyTabController.reviewFinalChapterButton;
         createStoryButton = storyTabController.createStoryButton;
         synthesizeStoryButton = storyTabController.synthesizeStoryButton;
+        syncQdrantMemoryButton = storyTabController.syncQdrantMemoryButton;
         recoverStoryTempButton = storyTabController.recoverStoryTempButton;
         analyzeStoryDocumentButton = storyTabController.analyzeStoryDocumentButton;
         continueStoryButton = storyTabController.continueStoryButton;
@@ -406,6 +372,7 @@ public class ChatController {
         synthesizeStoryButton.setOnAction(event -> synthesizeStoryProject());
         refreshStoryFilesButton.setOnAction(event -> refreshStoryFiles());
         createStoryButton.setOnAction(event -> createStoryProject());
+        syncQdrantMemoryButton.setOnAction(event -> syncQdrantMemory());
         recoverStoryTempButton.setOnAction(event -> recoverLatestStoryTemp());
         analyzeStoryDocumentButton.setOnAction(event -> analyzeStoryDocument());
         continueStoryButton.setOnAction(event -> continueStory());
@@ -482,95 +449,6 @@ public class ChatController {
             event.consume();
             sendMessage();
         }
-    }
-
-    @FXML
-    private void refreshRemoteChats() {
-        if (!chatAdminClient.isConfigured()) {
-            remoteStatusLabel.setText("n8n-Token oder URL fehlt");
-            return;
-        }
-
-        setRemoteActionsDisabled(true);
-        remoteStatusLabel.setText("Lade n8n-Chats...");
-        Thread.startVirtualThread(() -> {
-            try {
-                List<ChatExecution> executions = chatAdminClient.listChats();
-                Platform.runLater(() -> {
-                    remoteExecutions.setAll(executions);
-                    remoteStatusLabel.setText(executions.size() + " alte n8n-Ausfuehrungen gefunden");
-                    setRemoteActionsDisabled(false);
-                });
-            } catch (IOException | InterruptedException e) {
-                Platform.runLater(() -> {
-                    remoteStatusLabel.setText("n8n-Verwaltung nicht erreichbar");
-                    setRemoteActionsDisabled(false);
-                    showError("n8n-Chats konnten nicht geladen werden", e);
-                });
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        });
-    }
-
-    @FXML
-    private void exportRemoteChat() {
-        ChatExecution execution = remoteChatListView.getSelectionModel().getSelectedItem();
-        if (execution == null) {
-            return;
-        }
-
-        setRemoteActionsDisabled(true);
-        remoteStatusLabel.setText("Exportiere n8n-Chat " + execution.id() + "...");
-        Thread.startVirtualThread(() -> {
-            try {
-                chatAdminClient.exportChat(execution.id());
-                Platform.runLater(() -> {
-                    remoteStatusLabel.setText("Export in der VM wurde erstellt");
-                    setRemoteActionsDisabled(false);
-                });
-            } catch (IOException | InterruptedException e) {
-                Platform.runLater(() -> {
-                    remoteStatusLabel.setText("Export fehlgeschlagen");
-                    setRemoteActionsDisabled(false);
-                    showError("n8n-Chat konnte nicht exportiert werden", e);
-                });
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        });
-    }
-
-    @FXML
-    private void deleteRemoteChat() {
-        ChatExecution execution = remoteChatListView.getSelectionModel().getSelectedItem();
-        if (execution == null) {
-            return;
-        }
-
-        setRemoteActionsDisabled(true);
-        remoteStatusLabel.setText("Loesche n8n-Chat " + execution.id() + "...");
-        Thread.startVirtualThread(() -> {
-            try {
-                chatAdminClient.deleteChat(execution.id());
-                Platform.runLater(() -> {
-                    remoteExecutions.remove(execution);
-                    remoteStatusLabel.setText("n8n-Chat wurde geloescht");
-                    setRemoteActionsDisabled(false);
-                });
-            } catch (IOException | InterruptedException e) {
-                Platform.runLater(() -> {
-                    remoteStatusLabel.setText("Loeschen fehlgeschlagen");
-                    setRemoteActionsDisabled(false);
-                    showError("n8n-Chat konnte nicht geloescht werden", e);
-                });
-                if (e instanceof InterruptedException) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        });
     }
 
     @FXML
@@ -850,13 +728,6 @@ public class ChatController {
         return "lokaler KI-Endpunkt";
     }
 
-    private void setRemoteActionsDisabled(boolean disabled) {
-        refreshRemoteChatsButton.setDisable(disabled || !chatAdminClient.isConfigured());
-        ChatExecution selected = remoteChatListView.getSelectionModel().getSelectedItem();
-        exportRemoteChatButton.setDisable(disabled || selected == null);
-        deleteRemoteChatButton.setDisable(disabled || selected == null);
-    }
-
     private void setWebActionsDisabled(boolean disabled) {
         refreshWebChatsButton.setDisable(disabled || !webChatClient.isConfigured());
         WebChatSummary selected = webChatListView.getSelectionModel().getSelectedItem();
@@ -1038,34 +909,32 @@ public class ChatController {
             setStoryActionsDisabled(false);
             return;
         }
-        List<List<SchreibAiWorkflowClient.StoryDocument>> chunks = chunkStoryDocuments(selection.documentsToProcess());
-        storyStatusLabel.setText("Synthetisiere Entwurf fuer " + projectId + " in " + chunks.size() + " Bloecken...");
+        List<SchreibAiWorkflowClient.StoryDocument> documentsToProcess = selection.documentsToProcess();
+        storyStatusLabel.setText("Synthetisiere Gesamtdokument fuer " + projectId + " aus " + documentsToProcess.size() + " Quelldatei(en)...");
         storyWorkflowResultArea.clear();
         storyChanges.clear();
         Thread.startVirtualThread(() -> {
             try {
-                int total = chunks.size();
-                for (int index = 0; index < total; index++) {
-                    int current = index + 1;
-                    List<SchreibAiWorkflowClient.StoryDocument> chunk = chunks.get(index);
-                    Platform.runLater(() -> storyStatusLabel.setText(
-                            "KI verarbeitet Block " + current + " / " + total + ": " + chunkLabel(chunk)
-                    ));
-                    String result = schreibAiClient.synthesizeProject(projectId, outputLanguage, chunk);
-                    saveStoryTempResult("synthesize", current, total, result);
-                    Platform.runLater(() -> {
-                        storyWorkflowResultArea.appendText("\n\n--- Block " + current + " / " + total + " ---\n" + result);
-                        addStoryChangesFromResult(result);
-                        storyStatusLabel.setText("Block " + current + " / " + total + " empfangen und zwischengespeichert.");
-                    });
-                }
+                Platform.runLater(() -> storyStatusLabel.setText(
+                        "KI verarbeitet Gesamtsynthese: " + documentsToProcess.stream()
+                                .map(SchreibAiWorkflowClient.StoryDocument::path)
+                                .findFirst()
+                                .orElse(projectId)
+                ));
+                String result = schreibAiClient.synthesizeProject(projectId, outputLanguage, documentsToProcess);
+                saveStoryTempResult("synthesize", 1, 1, result);
+                Platform.runLater(() -> {
+                    storyWorkflowResultArea.setText(result);
+                    addStoryChangesFromResult(result);
+                    storyStatusLabel.setText("Gesamtsynthese empfangen und zwischengespeichert.");
+                });
                 Platform.runLater(() -> {
                     try {
                         saveSynthesisState(selection.originalDocuments(), selection.state());
                     } catch (IOException e) {
                         storyStatusLabel.setText("Story synthetisiert, aber Synthese-Status konnte nicht gespeichert werden.");
                     }
-                    storyStatusLabel.setText("Story-Schichten synthetisiert: " + projectId + " (" + total + " Bloecke)");
+                    storyStatusLabel.setText("Story-Schichten gesamthaft synthetisiert: " + projectId);
                     setStoryActionsDisabled(false);
                 });
             } catch (IOException | InterruptedException e) {
@@ -1073,6 +942,46 @@ public class ChatController {
                     storyStatusLabel.setText("Synthese fehlgeschlagen");
                     setStoryActionsDisabled(false);
                     showError("Entwurf konnte nicht synthetisiert werden", e);
+                });
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+    }
+
+    private void syncQdrantMemory() {
+        setStoryActionsDisabled(true);
+        String projectId = selectedStoryProjectId();
+        if (projectId.isBlank()) {
+            storyStatusLabel.setText("Bitte zuerst ein Arbeitsprojekt auswaehlen.");
+            setStoryActionsDisabled(false);
+            return;
+        }
+        List<SchreibAiWorkflowClient.StoryDocument> documents;
+        try {
+            documents = collectLocalStoryDocuments(true);
+        } catch (IOException e) {
+            storyStatusLabel.setText("Projektdateien konnten nicht gelesen werden");
+            setStoryActionsDisabled(false);
+            showError("Projektdateien konnten nicht gelesen werden", e);
+            return;
+        }
+        storyStatusLabel.setText("Synchronisiere " + documents.size() + " Memory-Datei(en) nach Qdrant fuer " + projectId + "...");
+        storyWorkflowResultArea.clear();
+        Thread.startVirtualThread(() -> {
+            try {
+                String result = schreibAiClient.syncQdrantMemory(projectId, documents);
+                Platform.runLater(() -> {
+                    storyWorkflowResultArea.setText(result);
+                    storyStatusLabel.setText("Qdrant-Memory synchronisiert: " + projectId);
+                    setStoryActionsDisabled(false);
+                });
+            } catch (IOException | InterruptedException e) {
+                Platform.runLater(() -> {
+                    storyStatusLabel.setText("Qdrant-Sync fehlgeschlagen");
+                    setStoryActionsDisabled(false);
+                    showError("Memory konnte nicht in Qdrant gespeichert werden", e);
                 });
                 if (e instanceof InterruptedException) {
                     Thread.currentThread().interrupt();
@@ -1434,7 +1343,7 @@ public class ChatController {
             return "";
         }
         Path snapshotPath = localStoryPath(snapshot);
-        return Files.isRegularFile(snapshotPath) ? Files.readString(snapshotPath, StandardCharsets.UTF_8) : "";
+        return Files.isRegularFile(snapshotPath) ? repairTextEncoding(Files.readString(snapshotPath, StandardCharsets.UTF_8)) : "";
     }
 
     private String changedPassageWithSentenceContext(String oldText, String newText) {
@@ -1495,41 +1404,6 @@ public class ChatController {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 nicht verfuegbar", e);
         }
-    }
-
-    private List<List<SchreibAiWorkflowClient.StoryDocument>> chunkStoryDocuments(List<SchreibAiWorkflowClient.StoryDocument> documents) {
-        List<List<SchreibAiWorkflowClient.StoryDocument>> chunks = new ArrayList<>();
-        for (SchreibAiWorkflowClient.StoryDocument document : documents) {
-            String content = document.content() == null ? "" : document.content();
-            if (content.length() <= STORY_SYNTHESIS_CHUNK_CHARS) {
-                chunks.add(List.of(document));
-                continue;
-            }
-            int index = 0;
-            int part = 1;
-            while (index < content.length()) {
-                int end = Math.min(content.length(), index + STORY_SYNTHESIS_CHUNK_CHARS);
-                int paragraphEnd = content.lastIndexOf("\n\n", end);
-                if (paragraphEnd > index + 600) {
-                    end = paragraphEnd;
-                }
-                chunks.add(List.of(new SchreibAiWorkflowClient.StoryDocument(
-                        document.path() + "#part-" + part,
-                        content.substring(index, end)
-                )));
-                index = end;
-                part++;
-            }
-        }
-        return chunks.isEmpty() ? List.of(List.of()) : chunks;
-    }
-
-    private String chunkLabel(List<SchreibAiWorkflowClient.StoryDocument> chunk) {
-        return chunk.stream()
-                .filter(Objects::nonNull)
-                .map(SchreibAiWorkflowClient.StoryDocument::path)
-                .findFirst()
-                .orElse("Projektkontext");
     }
 
     private Path storyTempDirectory() throws IOException {
@@ -1637,7 +1511,7 @@ public class ChatController {
         try {
             Path path = localStoryPath(change.path());
             storyOriginalContentArea.setText(Files.isRegularFile(path)
-                    ? Files.readString(path, StandardCharsets.UTF_8)
+                    ? repairTextEncoding(Files.readString(path, StandardCharsets.UTF_8))
                     : "");
             storyProposedContentArea.setText(normalizeProposedContent(change.content()));
             storyPathField.setText(change.path());
@@ -1699,6 +1573,7 @@ public class ChatController {
       reviewFinalChapterButton.setDisable(unavailable);
       createStoryButton.setDisable(unavailable);
         synthesizeStoryButton.setDisable(unavailable);
+        syncQdrantMemoryButton.setDisable(unavailable);
         recoverStoryTempButton.setDisable(disabled);
         analyzeStoryDocumentButton.setDisable(unavailable);
         continueStoryButton.setDisable(unavailable);
@@ -1757,13 +1632,45 @@ public class ChatController {
     }
 
     private String readLocalStoryFile(String relative) throws IOException {
-        return Files.readString(localStoryPath(relative), StandardCharsets.UTF_8);
+        return repairTextEncoding(Files.readString(localStoryPath(relative), StandardCharsets.UTF_8));
     }
 
     private void writeLocalStoryFile(String relative, String content) throws IOException {
         Path path = localStoryPath(relative);
         Files.createDirectories(path.getParent());
-        Files.writeString(path, content == null ? "" : content, StandardCharsets.UTF_8);
+        Files.writeString(path, repairTextEncoding(content == null ? "" : content), StandardCharsets.UTF_8);
+    }
+
+    private String repairTextEncoding(String text) {
+        if (text == null || text.isBlank()) {
+            return text == null ? "" : text;
+        }
+        if (!(text.contains("Ã") || text.contains("Â") || text.contains("â€"))) {
+            return text;
+        }
+        try {
+            String repaired = new String(text.getBytes(WINDOWS_1252), StandardCharsets.UTF_8);
+            return mojibakeScore(repaired) < mojibakeScore(text) ? repaired : text;
+        } catch (RuntimeException e) {
+            return text;
+        }
+    }
+
+    private int mojibakeScore(String value) {
+        if (value == null || value.isEmpty()) {
+            return 0;
+        }
+        return countOccurrences(value, "Ã") + countOccurrences(value, "Â") + countOccurrences(value, "â€");
+    }
+
+    private int countOccurrences(String value, String marker) {
+        int count = 0;
+        int index = 0;
+        while ((index = value.indexOf(marker, index)) >= 0) {
+            count++;
+            index += marker.length();
+        }
+        return count;
     }
 
     private List<SchreibAiWorkflowClient.StoryDocument> collectLocalStoryDocuments(boolean includeSourceOnly) throws IOException {
@@ -1784,7 +1691,7 @@ public class ChatController {
                 if (includeSourceOnly && isGeneratedStoryLayer(relative)) {
                     continue;
                 }
-                documents.add(new SchreibAiWorkflowClient.StoryDocument(relative, Files.readString(path, StandardCharsets.UTF_8)));
+                documents.add(new SchreibAiWorkflowClient.StoryDocument(relative, repairTextEncoding(Files.readString(path, StandardCharsets.UTF_8))));
             }
         }
         return documents;
@@ -1896,10 +1803,13 @@ public class ChatController {
 
     private String selectedOutputLanguage() {
         String value = storyOutputLanguageComboBox.getSelectionModel().getSelectedItem();
-        if (value == null || value.startsWith("Automatisch")) {
-            return "auto";
+        if (value == null || value.isBlank()) {
+            return "English";
         }
-        return value;
+        if (value.startsWith("Deutsch")) {
+            return "Deutsch";
+        }
+        return "English";
     }
 
     private void saveSession(ChatSession session) {

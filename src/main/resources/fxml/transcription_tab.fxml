@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.TranscriptionController" spacing="12" styleClass="story-pane">
+    <Label text="Sound und Video in TXT umwandeln" styleClass="remote-admin-title"/>
+    <Label text="Sounddateien direkt transkribieren oder aus einem Videofile erst Audio extrahieren und danach automatisch eine TXT-Datei erzeugen." wrapText="true" styleClass="remote-admin-help"/>
+
+    <GridPane hgap="8" vgap="10">
+        <Label text="Sounddatei" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <HBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="1">
+            <TextField fx:id="audioSourceField" promptText="C:\Audio\aufnahme.mp3" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseAudioSourceButton" text="Waehlen"/>
+        </HBox>
+
+        <Label text="Videofile direkt" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <HBox spacing="8" GridPane.rowIndex="1" GridPane.columnIndex="1">
+            <TextField fx:id="videoTranscriptSourceField" promptText="C:\Videos\aufnahme.mp4" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseVideoTranscriptSourceButton" text="Waehlen"/>
+        </HBox>
+
+        <Label text="Zielordner" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <HBox spacing="8" GridPane.rowIndex="2" GridPane.columnIndex="1">
+            <TextField fx:id="transcriptTargetDirectoryField" promptText="C:\Transkripte" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseTranscriptTargetDirectoryButton" text="Ordner"/>
+        </HBox>
+
+        <Label text="Ausgabedatei" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="transcriptTargetNameField" promptText="aufnahme.txt" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Sprache" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="transcriptLanguageComboBox" GridPane.rowIndex="4" GridPane.columnIndex="1" maxWidth="Infinity"/>
+
+        <Label text="Ausgabe" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="transcriptOutputModeComboBox" GridPane.rowIndex="5" GridPane.columnIndex="1" maxWidth="Infinity"/>
+
+        <Label text="Sprecher 1" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <TextField fx:id="speakerName1Field" promptText="Sprechername1" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+        <Label text="Sprecher 2" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+        <TextField fx:id="speakerName2Field" promptText="Sprechername2" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+        <Label text="Erzaehlstimme 3" GridPane.rowIndex="8" GridPane.columnIndex="0"/>
+        <TextField fx:id="narratorVoice3Field" promptText="Erzaehlstimme 3" GridPane.rowIndex="8" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <CheckBox fx:id="fullTranscriptCheckBox" text="Vollstaendiges Transkript erstellen"/>
+    <HBox spacing="8">
+        <Button fx:id="transcribeAudioButton" text="Sounddatei zu TXT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="send-button"/>
+        <Button fx:id="transcribeVideoButton" text="Videofile direkt zu TXT" maxWidth="Infinity" HBox.hgrow="ALWAYS" styleClass="send-button"/>
+    </HBox>
+    <Label fx:id="transcriptionStatusLabel" text="Bereit" wrapText="true" styleClass="remote-status"/>
+    <Label text="Transkript-Vorschau" styleClass="remote-section-title"/>
+    <TextArea fx:id="transcriptionResultArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+</VBox>

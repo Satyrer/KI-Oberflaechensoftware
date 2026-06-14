@@ -48,17 +48,6 @@
                         </bottom>
                     </BorderPane>
                     <VBox styleClass="remote-admin-pane">
-                        <Label text="n8n Chat-Verwaltung" styleClass="remote-admin-title"/>
-                        <Label text="Alte Ausfuehrungen aus der aktuellen KI-VM laden, exportieren oder entfernen." wrapText="true" styleClass="remote-admin-help"/>
-                        <Button fx:id="refreshRemoteChatsButton" text="Alte Chats laden" maxWidth="Infinity" onAction="#refreshRemoteChats"/>
-                        <ListView fx:id="remoteChatListView" VBox.vgrow="ALWAYS" styleClass="remote-chat-list"/>
-                        <Label text="Vorschau" styleClass="remote-section-title"/>
-                        <Label fx:id="remotePreviewLabel" text="Keine alte Ausfuehrung ausgewaehlt." wrapText="true" styleClass="remote-preview"/>
-                        <HBox styleClass="remote-actions">
-                            <Button fx:id="exportRemoteChatButton" text="TXT exportieren" disable="true" onAction="#exportRemoteChat"/>
-                            <Button fx:id="deleteRemoteChatButton" text="Loeschen" disable="true" styleClass="danger-button" onAction="#deleteRemoteChat"/>
-                        </HBox>
-                        <Label fx:id="remoteStatusLabel" text="n8n-Verwaltung wird vorbereitet" wrapText="true" styleClass="remote-status"/>
                         <Label text="n8n WebUI Chats" styleClass="remote-admin-title"/>
                         <Label text="Chats aus /home/chat laden, lokal importieren oder einzeln final aus n8n entfernen." wrapText="true" styleClass="remote-admin-help"/>
                         <Button fx:id="refreshWebChatsButton" text="WebUI-Chats laden" maxWidth="Infinity" onAction="#refreshWebChats"/>
@@ -75,6 +64,12 @@
             </Tab>
             <Tab text="Story bauen">
                 <fx:include fx:id="storyTab" source="story_tab.fxml"/>
+            </Tab>
+            <Tab text="Video zu Sound">
+                <fx:include source="media_convert_tab.fxml"/>
+            </Tab>
+            <Tab text="Sound zu TXT">
+                <fx:include source="transcription_tab.fxml"/>
             </Tab>
         </TabPane>
     </center>

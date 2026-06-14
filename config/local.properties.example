@@ -15,11 +15,8 @@ ki.apiKey=
 ki.model=mistral-rag:latest
 ki.timeoutSeconds=300
 
-# Current local AI stack / n8n chat administration.
+# Current local AI stack / n8n.
 n8n.host=192.168.178.41
-n8n.chatAdmin.port=8088
-n8n.chatAdmin.baseUrl=
-n8n.chatAdmin.token=
 
 # n8n WebUI import for chats from /home/chat.
 # These credentials are used only locally to read/import/delete one selected WebUI chat.
@@ -37,6 +34,27 @@ n8n.schreibAi.timeoutSeconds=240
 # Enable "Make Chat Publicly Available" in the n8n Chat Trigger and paste the Chat URL here.
 n8n.chatWebhook.url=
 n8n.chatWebhook.authorization=
+
+# Media tools.
+# ffmpeg must be available either in PATH or as an absolute path, for example:
+# media.ffmpeg.path=C:\\Tools\\ffmpeg\\bin\\ffmpeg.exe
+media.ffmpeg.path=ffmpeg
+
+# Transcription can run through a n8n webhook in the VM or through a local command.
+# If transcription.n8n.webhookUrl is empty, the app uses:
+# n8n.web.baseUrl + /webhook/schreib-ai/transcribe
+# If transcription.n8n.webhookUrl is set, the app sends multipart/form-data there with:
+# - file: binary audio file
+# - language: de/en/...
+transcription.n8n.webhookUrl=
+transcription.n8n.authorization=
+transcription.defaultLanguage=de
+
+# Optional local command template. Placeholders:
+# {input} {output} {outputDir} {language}
+# Example for whisper.cpp:
+# transcription.command=C:\\Tools\\whisper.cpp\\main.exe -m C:\\Models\\ggml-medium.bin -f "{input}" -otxt -of "{output}"
+transcription.command=
 
 # Local storage folders. These folders are ignored by Git.
 chat.directory=chats

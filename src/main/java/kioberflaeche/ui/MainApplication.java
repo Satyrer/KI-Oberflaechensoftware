@@ -9,7 +9,6 @@ import javafx.scene.control.ButtonType;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.admin.N8nWebChatClient;
 import kioberflaeche.ai.AiClient;
 import kioberflaeche.ai.HttpAiClient;
@@ -34,7 +33,6 @@ public class MainApplication extends Application {
         AppConfig config = AppConfig.load();
         AiClient aiClient = createAiClient(config);
         ChatStore chatStore = new ChatStore(Path.of(config.chatDirectory()));
-        N8nChatAdminClient chatAdminClient = new N8nChatAdminClient(config.n8nAdminBaseUrl(), config.n8nAdminToken());
         N8nWebChatClient webChatClient = new N8nWebChatClient(
                 config.n8nWebBaseUrl(),
                 config.n8nWebEmail(),
@@ -45,7 +43,7 @@ public class MainApplication extends Application {
                 config.n8nSchreibAiBaseUrl(),
                 config.n8nSchreibAiTimeoutSeconds()
         );
-        ChatView chatView = new ChatView(aiClient, chatStore, chatAdminClient, webChatClient, schreibAiClient);
+        ChatView chatView = new ChatView(aiClient, chatStore, webChatClient, schreibAiClient);
         activeChatController = chatView.getController();
 
         Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();

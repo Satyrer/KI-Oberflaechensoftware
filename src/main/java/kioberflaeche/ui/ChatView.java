@@ -2,7 +2,6 @@ package kioberflaeche.ui;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import kioberflaeche.admin.N8nChatAdminClient;
 import kioberflaeche.admin.N8nWebChatClient;
 import kioberflaeche.ai.AiClient;
 import kioberflaeche.controller.ChatController;
@@ -18,7 +17,6 @@ public class ChatView {
     public ChatView(
             AiClient aiClient,
             ChatStore chatStore,
-            N8nChatAdminClient chatAdminClient,
             N8nWebChatClient webChatClient,
             SchreibAiWorkflowClient schreibAiClient
     ) {
@@ -26,7 +24,7 @@ public class ChatView {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/chat_window.fxml"));
             loader.setControllerFactory(type -> {
                 if (type == ChatController.class) {
-                    controller = new ChatController(aiClient, chatStore, chatAdminClient, webChatClient, schreibAiClient);
+                    controller = new ChatController(aiClient, chatStore, webChatClient, schreibAiClient);
                     return controller;
                 }
                 try {

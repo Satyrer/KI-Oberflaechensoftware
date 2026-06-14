@@ -158,6 +158,14 @@ public class SchreibAiWorkflowClient {
         return post("/webhook/schreib-ai/finalize", payload);
     }
 
+    public String syncQdrantMemory(String projectId, List<StoryDocument> documents) throws IOException, InterruptedException {
+        String payload = "{"
+                + "\"projectId\":\"" + escapeJson(projectId) + "\","
+                + "\"documents\":" + documentsJson(documents)
+                + "}";
+        return post("/webhook/schreib-ai/qdrant-sync", payload);
+    }
+
     private String storyAction(String payload) throws IOException, InterruptedException {
         return post("/webhook/schreib-ai/story", payload);
     }

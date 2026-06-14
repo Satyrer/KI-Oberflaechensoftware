@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.MediaConversionController" spacing="12" styleClass="story-pane">
+    <Label text="Video in Sounddatei umwandeln" styleClass="remote-admin-title"/>
+    <Label text="Quelle, Format und Zielordner frei waehlen. Die Umwandlung nutzt ffmpeg lokal oder den konfigurierten ffmpeg-Pfad." wrapText="true" styleClass="remote-admin-help"/>
+
+    <GridPane hgap="8" vgap="10">
+        <Label text="Videodatei" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <HBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="1">
+            <TextField fx:id="videoSourceField" promptText="C:\Videos\aufnahme.mp4" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseVideoSourceButton" text="Waehlen"/>
+        </HBox>
+
+        <Label text="Quellformat" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="videoInputFormatComboBox" maxWidth="Infinity" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Zielformat" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="audioOutputFormatComboBox" maxWidth="Infinity" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Zielordner" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <HBox spacing="8" GridPane.rowIndex="3" GridPane.columnIndex="1">
+            <TextField fx:id="audioTargetDirectoryField" promptText="C:\Audio" HBox.hgrow="ALWAYS"/>
+            <Button fx:id="chooseAudioTargetDirectoryButton" text="Ordner"/>
+        </HBox>
+
+        <Label text="Ausgabedatei" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="audioTargetNameField" promptText="aufnahme.mp3" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <Button fx:id="convertVideoToAudioButton" text="Video zu Sounddatei konvertieren" maxWidth="Infinity" styleClass="send-button"/>
+    <Label fx:id="mediaConversionStatusLabel" text="Bereit" wrapText="true" styleClass="remote-status"/>
+    <Label text="Protokoll" styleClass="remote-section-title"/>
+    <TextArea fx:id="mediaConversionLogArea" editable="false" wrapText="true" VBox.vgrow="ALWAYS"/>
+</VBox>
