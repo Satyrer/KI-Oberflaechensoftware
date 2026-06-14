@@ -1,6 +1,6 @@
-# KI-VM Status Bis Neustart
+# KI-VM-Status
 
-Stand: 2026-06-02 kurz vor dem erzwungenen Neustart. Die VM wird aktuell nicht gestartet.
+Ursprung: Statusnotiz vom 2026-06-02 kurz vor dem erzwungenen Neustart. Die VM wurde zu diesem Zeitpunkt nicht gestartet.
 
 ## Lokale Oberflaeche
 
@@ -10,7 +10,7 @@ Stand: 2026-06-02 kurz vor dem erzwungenen Neustart. Die VM wird aktuell nicht g
 - Aktuelle UI-Verkabelung nutzt:
   - Ollama-Gateway: `http://192.168.178.41:11435/api/chat`
   - Modell: `mistral-rag:latest`
-  - n8n-Chatverwaltung: `http://192.168.178.41:8088`
+  - n8n-WebUI/API: `http://192.168.178.41:5678`
 
 ## Letzter belastbarer VM-Stack-Stand
 
@@ -18,7 +18,6 @@ Die Diagnose direkt in der VM zeigte:
 
 - Gast-IP: `192.168.178.41`
 - Docker-Container liefen:
-  - `eigene-ai-n8n-chat-admin` auf `8088`
   - `eigene-ai-open-webui` auf `3000`
   - `eigene-ai-ollama-gateway` auf `11435`
   - `eigene-ai-n8n` auf `5678`
@@ -31,7 +30,6 @@ Die Diagnose direkt in der VM zeigte:
 - Innerhalb der VM waren erreichbar:
   - `127.0.0.1:11435/api/tags`
   - `127.0.0.1:11434/api/tags`
-  - `127.0.0.1:8088` mit Token
 
 ## Modelle
 
@@ -48,9 +46,7 @@ Damit ist die Oberflaeche auf das richtige Modell vorbereitet.
 Erste Tests ohne Freigabe wirkten fehlerhaft, weil die Codex-Sandbox Netzwerkzugriffe blockierte. Mit freigegebenem Netzwerkzugriff waren die VM-Ports erreichbar:
 
 - `192.168.178.41:11435` TCP erfolgreich
-- `192.168.178.41:8088` TCP erfolgreich
 - `GET /api/tags` am Ollama-Gateway erfolgreich
-- n8n-Chatverwaltung antwortete mit Token-geschuetztem Dienstverhalten
 
 ## Offener Punkt Vor Neustart
 
@@ -97,8 +93,7 @@ Ohne VM-Start aktuell offen lassen. Beim naechsten geplanten Start:
 1. VM-IP pruefen.
 2. `GET http://SERVER_IP:11435/api/tags`.
 3. Kurzer `POST /api/chat` mit `stream=false`.
-4. n8n-Chatverwaltung mit lokalem Token pruefen.
-5. Falls Chat wieder timed out: Ollama- und Gateway-Logs lesen, bevor die Java-Oberflaeche geaendert wird.
+4. Falls Chat wieder timed out: Ollama- und Gateway-Logs lesen, bevor die Java-Oberflaeche geaendert wird.
 
 ## Nachpruefung 2026-06-03
 
@@ -107,9 +102,7 @@ Die VM wurde spaeter wieder gestartet und vorsichtig erneut geprueft:
 - VMware meldete die laufende VM `n8n Server.vmx`.
 - Gast-IP blieb `192.168.178.41`.
 - `11435` fuer den Ollama-Gateway war von Windows erreichbar.
-- `8088` fuer die n8n-Chatverwaltung war von Windows erreichbar.
 - `GET /api/tags` am Gateway lieferte weiterhin `mistral-rag:latest`, `nomic-embed-text:latest` und `mistral:latest`.
-- Die n8n-Chatverwaltung antwortete mit lokalem Token erfolgreich.
 - Ein vorsichtiger `POST /api/chat` mit kurzer Antwortbegrenzung lieferte `OK`.
 - Der direkte Java-Clienttest mit `HttpAiClient` und lokaler `AppConfig` lieferte ebenfalls `OK`.
 
