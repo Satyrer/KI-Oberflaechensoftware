@@ -13,7 +13,7 @@ Die Oberflaeche bietet:
 - automatische Speicherung lokaler Chats als TXT-Dateien
 - Export und Loeschen lokaler Chats per Kontextmenue
 - Anbindung an den Ollama-Gateway der KI-VM
-- Zugriff auf die n8n-Chatverwaltung fuer alte n8n-Ausfuehrungen
+- Zugriff auf n8n-WebUI-Chats aus `/home/chat`
 - Export und Loeschen alter n8n-Chat-Ausfuehrungen
 - Import von n8n-WebUI-Chats aus `/home/chat`
 - lokaler Import von Markdown-Anhaengen in den jeweiligen Chatordner
@@ -31,7 +31,7 @@ Fuer die normale Nutzung brauchst du:
 - eine konfigurierte lokale Datei `config/local.properties`
 - fuer Live-KI-Antworten: laufende KI-VM mit Docker-Stack
 
-Die KI-VM muss nicht fuer lokale Chatverwaltung, Export oder Oberflaechenarbeit laufen. Sie wird nur fuer KI-Antworten und n8n-Chatverwaltung benoetigt.
+Die KI-VM muss nicht fuer lokale Chatverwaltung, Export oder Oberflaechenarbeit laufen. Sie wird nur fuer KI-Antworten und den Zugriff auf n8n-WebUI-Chats benoetigt.
 
 ## 3. Projekt Starten
 
@@ -83,9 +83,6 @@ ki.model=mistral-rag:latest
 ki.timeoutSeconds=300
 
 n8n.host=192.168.178.41
-n8n.chatAdmin.port=8088
-n8n.chatAdmin.baseUrl=
-n8n.chatAdmin.token=
 n8n.web.port=5678
 n8n.web.baseUrl=
 n8n.web.email=
@@ -172,24 +169,9 @@ Elemente:
 
 Nutzer-Nachrichten und KI-Nachrichten werden als getrennte Chat-Bubbles angezeigt.
 
-### Rechter Bereich: n8n Chat-Verwaltung
-
-Der rechte Bereich verwaltet alte n8n-Ausfuehrungen aus der KI-VM.
-
-Elemente:
-
-- `Alte Chats laden`
-- Liste alter n8n-Ausfuehrungen
-- Vorschau
-- `TXT exportieren`
-- `Loeschen`
-- Statusanzeige
-
-Dieser Bereich funktioniert nur, wenn die KI-VM laeuft und `n8n.chatAdmin.token` korrekt gesetzt ist.
-
 ### Rechter Bereich: n8n WebUI Chats
 
-Der zweite rechte Bereich liest die n8n-WebUI-Chats aus der Ansicht `/home/chat`.
+Der rechte Bereich liest die n8n-WebUI-Chats aus der Ansicht `/home/chat`.
 
 Elemente:
 
@@ -277,50 +259,7 @@ Das Loeschen entfernt die lokale TXT-Datei aus dem Chat-Speicherordner.
 
 Wenn der letzte Chat geloescht wird, legt die Anwendung automatisch einen neuen leeren Chat an.
 
-## 8. n8n Chat-Verwaltung Nutzen
-
-Die n8n Chat-Verwaltung bezieht sich nicht auf die lokalen Chats der Java-Oberflaeche, sondern auf alte n8n-Ausfuehrungen in der KI-VM.
-
-### Alte n8n-Chats Laden
-
-1. Sicherstellen, dass die KI-VM laeuft.
-2. Sicherstellen, dass `n8n.chatAdmin.token` in `config/local.properties` gesetzt ist.
-3. Rechts auf `Alte Chats laden` klicken.
-
-Wenn die Verbindung erfolgreich ist:
-
-- Die Liste alter n8n-Ausfuehrungen wird gefuellt.
-- Die Statusanzeige meldet die Anzahl gefundener Eintraege.
-
-Wenn die Verbindung fehlschlaegt:
-
-- Es erscheint eine Fehlermeldung.
-- Typische Ursachen sind VM aus, falsche IP, falscher Token oder nicht laufender `n8n-chat-admin`-Container.
-
-### n8n-Chat Exportieren
-
-1. Einen alten n8n-Chat in der rechten Liste auswaehlen.
-2. Auf `TXT exportieren` klicken.
-
-Der Export wird in der VM erstellt, nicht lokal auf dem Windows-Dateisystem.
-
-Der n8n-Admin-Dienst erzeugt in der VM:
-
-```text
-exports/chat-ID-ZEIT/chat.txt
-exports/chat-ID-ZEIT/execution.json
-```
-
-Falls Binaerdateien referenziert sind, werden sie ebenfalls in einen Unterordner kopiert.
-
-### n8n-Chat Loeschen
-
-1. Einen alten n8n-Chat in der rechten Liste auswaehlen.
-2. Auf `Loeschen` klicken.
-
-Das Loeschen entfernt die n8n-Ausfuehrung aus der Datenbank der VM. Diese Funktion ist deshalb deutlich staerker als das Loeschen eines lokalen Java-Chats.
-
-## 9. n8n WebUI Chats Importieren Und Loeschen
+## 8. n8n WebUI Chats Importieren Und Loeschen
 
 Die n8n-WebUI-Chats sind die Chats aus:
 
@@ -328,7 +267,7 @@ Die n8n-WebUI-Chats sind die Chats aus:
 http://SERVER_IP:5678/home/chat
 ```
 
-Sie werden nicht ueber die alte n8n-Chatverwaltung auf Port `8088` geladen, sondern ueber die authentifizierte n8n-WebUI-API.
+Sie werden ueber die authentifizierte n8n-WebUI-API geladen.
 
 ### Zugangsdaten Setzen
 
@@ -373,7 +312,7 @@ chats/CHAT-ID/ANHANG.md
 
 Geloescht wird nur der aktuell ausgewaehlte WebUI-Chat. Bereits lokal importierte Chatordner bleiben erhalten.
 
-## 10. Speicherformat Lokaler Chats
+## 9. Speicherformat Lokaler Chats
 
 Lokale Chats werden als TXT-Dateien im Ordner `chats/` gespeichert.
 
@@ -405,7 +344,7 @@ Der Ordner `chats/` ist in `.gitignore` eingetragen.
 
 Importierte n8n-WebUI-Chats koennen als eigener Ordner unter `chats/` liegen. Die Anwendung liest sowohl alte flache TXT-Dateien als auch diese Chatordner.
 
-## 11. Sicherheit Und Git
+## 10. Sicherheit Und Git
 
 Folgende Daten duerfen nicht ins Git:
 
@@ -419,7 +358,7 @@ Folgende Daten duerfen nicht ins Git:
 
 Die Anwendung maskiert Tokens in der Konfigurationsausgabe. Trotzdem sollte die lokale Konfigurationsdatei nicht geteilt werden.
 
-## 12. Typische Fehlerbilder
+## 11. Typische Fehlerbilder
 
 ### Fehler: KI antwortet nicht
 
@@ -439,21 +378,6 @@ http://SERVER_IP:11435/api/tags
 ```
 
 Wenn dieser Endpunkt nicht erreichbar ist, liegt das Problem vor der Java-Oberflaeche.
-
-### Fehler: n8n-Verwaltung nicht erreichbar
-
-Moegliche Ursachen:
-
-- VM ist aus.
-- `n8n-chat-admin` laeuft nicht.
-- Token fehlt oder ist falsch.
-- Port `8088` ist nicht erreichbar.
-
-Pruefen:
-
-```text
-http://SERVER_IP:8088/?token=DEIN_TOKEN
-```
 
 ### Fehler: Chat wird nicht exportiert
 
@@ -498,10 +422,25 @@ Antworte exakt mit OK.
 - Die Chatantworten werden nicht gestreamt.
 - Die Oberflaeche erkennt waehrend einer laufenden Antwort nicht, ob das Modell noch aktiv arbeitet.
 - Der Timeout ist deshalb die technische Grenze fuer haengende Antworten.
-- n8n-Exports werden aktuell in der VM erzeugt, nicht automatisch auf Windows kopiert.
+- n8n-WebUI-Chats werden bei Bedarf lokal importiert; die Originale bleiben bis zum finalen Loeschen in n8n.
+- Video-zu-Sound benoetigt `ffmpeg` lokal oder einen konfigurierten `media.ffmpeg.path`.
+- Sound-zu-TXT benoetigt entweder einen n8n-Webhook oder ein lokales Whisper-kompatibles Kommando.
 - Die geplante Vorschaltpruefung fuer Dokumente und Systemrollen-Wechsel ist noch nicht in der Java-Oberflaeche umgesetzt.
 
-## 14. Fuer Entwickler
+## 14. Media und Transkription
+
+Der Tab `Video zu Sound` wandelt Videodateien wie MP4, MOV, MKV oder WEBM in Sounddateien um. Quelle, Zielformat, Zielordner und Ausgabedatei sind frei waehlbar. Die Umwandlung laeuft ueber `ffmpeg`.
+
+Der Tab `Sound zu TXT` kann Audiodateien direkt in eine TXT-Datei transkribieren. Zusaetzlich kann ein Videofile direkt ausgewaehlt werden; die Oberflaeche extrahiert dann temporaer Audio und gibt dieses an die Transkription weiter.
+
+Fuer die Transkription gibt es zwei Betriebsarten:
+
+1. `transcription.n8n.webhookUrl` ist gesetzt: Die Datei wird an n8n in der VM gesendet.
+2. Kein Webhook gesetzt: Die App nutzt `transcription.command` oder als Standard `whisper` aus dem PATH.
+
+Weitere Details stehen in [Media- und Transkriptionsfunktionen](media-transkription.md).
+
+## 15. Fuer Entwickler
 
 Wichtige Dateien:
 
@@ -514,7 +453,10 @@ src/main/resources/css/chat.css
 src/main/java/kioberflaeche/ai/HttpAiClient.java
 src/main/java/kioberflaeche/config/AppConfig.java
 src/main/java/kioberflaeche/storage/ChatStore.java
-src/main/java/kioberflaeche/admin/N8nChatAdminClient.java
+src/main/java/kioberflaeche/controller/MediaConversionController.java
+src/main/java/kioberflaeche/controller/TranscriptionController.java
+src/main/java/kioberflaeche/media/MediaConverter.java
+src/main/java/kioberflaeche/media/TranscriptionService.java
 ```
 
 Build pruefen:
@@ -541,13 +483,15 @@ KI_MODEL
 KI_TIMEOUT_SECONDS
 KI_CHAT_DIRECTORY
 N8N_HOST
-N8N_CHAT_ADMIN_PORT
-N8N_CHAT_ADMIN_BASE_URL
-N8N_CHAT_ADMIN_TOKEN
+MEDIA_FFMPEG_PATH
+TRANSCRIPTION_COMMAND
+TRANSCRIPTION_N8N_WEBHOOK_URL
+TRANSCRIPTION_N8N_AUTHORIZATION
+TRANSCRIPTION_DEFAULT_LANGUAGE
 KI_CONFIG
 ```
 
-## 15. Kurzfassung
+## 16. Kurzfassung
 
 1. IntelliJ starten.
 2. Run Configuration `KI Chat starten` ausfuehren.
@@ -555,4 +499,6 @@ KI_CONFIG
 4. Nachricht unten eingeben.
 5. Mit `Enter` oder `Senden` abschicken.
 6. Rechtsklick auf lokale Chats fuer Export oder Loeschen.
-7. Rechte n8n-Verwaltung nur verwenden, wenn die KI-VM laeuft.
+7. Rechte n8n-WebUI-Verwaltung nur verwenden, wenn die KI-VM laeuft.
+8. `Video zu Sound` fuer MP4/MOV/MKV zu MP3/WAV/M4A nutzen.
+9. `Sound zu TXT` fuer Audio- oder Video-Transkripte nutzen.
