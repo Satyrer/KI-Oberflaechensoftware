@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
@@ -41,6 +43,7 @@ public class TranscriptionController {
     @FXML private TextField narratorVoice3Field;
     @FXML private CheckBox fullTranscriptCheckBox;
     @FXML private Button chooseAudioSourceButton;
+    @FXML private Button chooseAudioSourceDirectoryButton;
     @FXML private Button chooseVideoTranscriptSourceButton;
     @FXML private Button chooseTranscriptTargetDirectoryButton;
     @FXML private Button transcribeAudioButton;
@@ -51,6 +54,30 @@ public class TranscriptionController {
     private AppConfig config;
     private MediaConverter mediaConverter;
     private TranscriptionService transcriptionService;
+
+    private record TranscriptionRequest(
+            Path input,
+            Path output,
+            String language,
+            String outputMode,
+            String speakerName1,
+            String speakerName2,
+            String narratorVoice3,
+            boolean extractAudioFirst
+    ) {
+        boolean structured() {
+            return "structured".equalsIgnoreCase(outputMode);
+        }
+    }
+
+    private record BatchTranscriptionRequest(
+            List<TranscriptionRequest> requests,
+            Path combinedOutput
+    ) {
+        boolean batch() {
+            return requests.size() > 1;
+        }
+    }
 
     @FXML
     private void initialize() {
@@ -70,6 +97,7 @@ public class TranscriptionController {
         narratorVoice3Field.setText("Erzaehlstimme 3");
         fullTranscriptCheckBox.setSelected(true);
         chooseAudioSourceButton.setOnAction(event -> chooseAudioSource());
+        chooseAudioSourceDirectoryButton.setOnAction(event -> chooseAudioSourceDirectory());
         chooseVideoTranscriptSourceButton.setOnAction(event -> chooseVideoSource());
         chooseTranscriptTargetDirectoryButton.setOnAction(event -> chooseTargetDirectory());
         transcribeAudioButton.setOnAction(event -> transcribeAudio());
@@ -91,6 +119,20 @@ public class TranscriptionController {
         }
     }
 
+    private void chooseAudioSourceDirectory() {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Soundordner auswaehlen");
+        File initial = DEFAULT_SOUND_DIRECTORY.toFile();
+        if (initial.isDirectory()) {
+            chooser.setInitialDirectory(initial);
+        }
+        File selected = chooser.showDialog(ownerWindow());
+        if (selected != null) {
+            audioSourceField.setText(selected.toPath().toString());
+            prepareTargetFrom(selected.toPath());
+        }
+    }
+
     private void chooseVideoSource() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Videodatei fuer Direkt-Transkript auswaehlen");
@@ -106,7 +148,7 @@ public class TranscriptionController {
 
     private void chooseTargetDirectory() {
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Zielordner fuer TXT auswaehlen");
+        chooser.setTitle("Zielordner fuer Transkriptdateien auswaehlen");
         File current = currentTargetDirectory();
         if (current.isDirectory()) {
             chooser.setInitialDirectory(current);
@@ -118,52 +160,158 @@ public class TranscriptionController {
     }
 
     private void transcribeAudio() {
-        Path input = Path.of(audioSourceField.getText() == null ? "" : audioSourceField.getText().trim());
-        if (input.toString().isBlank()) {
+        String inputText = cleanText(audioSourceField.getText());
+        if (inputText.isBlank()) {
             setStatus("Bitte zuerst eine Sounddatei auswaehlen.");
             return;
         }
-        Path output = transcriptTargetPath(input);
-        runTranscription(input, output, false);
+        try {
+            BatchTranscriptionRequest request = audioTranscriptionRequest(Path.of(inputText));
+            if (request.requests().isEmpty()) {
+                setStatus("Im Quellordner wurden keine Sounddateien gefunden.");
+                return;
+            }
+            runTranscriptions(request);
+        } catch (IOException e) {
+            transcriptionResultArea.setText(e.getMessage());
+            setStatus("Sounddateien konnten nicht gelesen werden.");
+        }
     }
 
     private void transcribeVideo() {
-        Path input = Path.of(videoTranscriptSourceField.getText() == null ? "" : videoTranscriptSourceField.getText().trim());
-        if (input.toString().isBlank()) {
+        String inputText = cleanText(videoTranscriptSourceField.getText());
+        if (inputText.isBlank()) {
             setStatus("Bitte zuerst eine Videodatei auswaehlen.");
             return;
         }
-        Path output = transcriptTargetPath(input);
-        runTranscription(input, output, true);
+        TranscriptionRequest request = transcriptionRequest(Path.of(inputText), transcriptTargetPath(Path.of(inputText)), true);
+        runTranscription(request);
     }
 
-    private void runTranscription(Path input, Path output, boolean extractAudioFirst) {
-        if (output == null) {
+    private BatchTranscriptionRequest audioTranscriptionRequest(Path source) throws IOException {
+        if (!Files.isDirectory(source)) {
+            return new BatchTranscriptionRequest(
+                    List.of(transcriptionRequest(source, transcriptTargetPath(source), false)),
+                    null
+            );
+        }
+
+        Path targetDirectory = targetDirectoryPath();
+        if (targetDirectory == null) {
+            return new BatchTranscriptionRequest(List.of(), null);
+        }
+
+        List<TranscriptionRequest> requests = new ArrayList<>();
+        for (Path audioFile : audioFilesIn(source)) {
+            Path output = targetDirectory.resolve(defaultTranscriptFileName(audioFile)).toAbsolutePath().normalize();
+            requests.add(transcriptionRequest(audioFile, output, false));
+        }
+
+        return new BatchTranscriptionRequest(requests, null);
+    }
+
+    private TranscriptionRequest transcriptionRequest(Path input, Path output, boolean extractAudioFirst) {
+        String language = cleanText(transcriptLanguageComboBox.getValue());
+        String outputMode = cleanText(transcriptOutputModeComboBox.getValue());
+        return new TranscriptionRequest(
+                input,
+                output,
+                language.isBlank() ? config.transcriptionDefaultLanguage() : language,
+                outputMode.isBlank() ? "plain" : outputMode,
+                optionalVoiceName(speakerName1Field.getText(), "Sprechername1"),
+                optionalVoiceName(speakerName2Field.getText(), "Sprechername2"),
+                optionalVoiceName(narratorVoice3Field.getText(), "Erzaehlstimme 3"),
+                extractAudioFirst
+        );
+    }
+
+    private void runTranscriptions(BatchTranscriptionRequest batch) {
+        if (!batch.batch()) {
+            runTranscription(batch.requests().get(0));
+            return;
+        }
+        if (batch.requests().stream().anyMatch(request -> request.output() == null)) {
+            setStatus("Bitte Zielordner angeben.");
+            return;
+        }
+
+        setRunning(true, "Erstelle Transkripte fuer " + batch.requests().size() + " Sounddateien...");
+        Thread.startVirtualThread(() -> {
+            List<String> combinedSections = new ArrayList<>();
+            int completed = 0;
+            try {
+                for (TranscriptionRequest request : batch.requests()) {
+                    completed++;
+                    int current = completed;
+                    Platform.runLater(() -> setStatus("Transkribiere " + current + "/" + batch.requests().size() + ": " + request.input().getFileName()));
+                    transcriptionService.transcribe(
+                            request.input().toAbsolutePath().normalize(),
+                            request.output(),
+                            request.language(),
+                            request.outputMode(),
+                            request.speakerName1(),
+                            request.speakerName2(),
+                            request.narratorVoice3()
+                    );
+                    Path previewPath = request.structured() ? TranscriptionService.structuredTextPath(request.output()) : request.output();
+                    String transcript = Files.readString(Files.isRegularFile(previewPath) ? previewPath : request.output());
+                    combinedSections.add("## " + request.input().getFileName() + System.lineSeparator() + System.lineSeparator() + transcript.strip());
+                }
+
+                String combinedTranscript = String.join(System.lineSeparator() + System.lineSeparator(), combinedSections).strip();
+                if (batch.combinedOutput() != null) {
+                    Files.createDirectories(batch.combinedOutput().getParent());
+                    Files.writeString(batch.combinedOutput(), combinedTranscript + System.lineSeparator());
+                }
+                Platform.runLater(() -> {
+                    transcriptionResultArea.setText(combinedTranscript);
+                    String message = batch.requests().size() + " Transkripte erstellt.";
+                    if (batch.combinedOutput() != null) {
+                        message += " Gesamtdatei: " + batch.combinedOutput();
+                    }
+                    setRunning(false, message);
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    transcriptionResultArea.setText(e.getMessage());
+                    setRunning(false, "Batch-Transkription fehlgeschlagen.");
+                });
+            }
+        });
+    }
+
+    private void runTranscription(TranscriptionRequest request) {
+        if (request.output() == null) {
             setStatus("Bitte Zielordner und Dateinamen angeben.");
             return;
         }
-        setRunning(true, extractAudioFirst ? "Extrahiere Audio und erstelle Transkript..." : "Erstelle Transkript...");
+        setRunning(true, request.extractAudioFirst() ? "Extrahiere Audio und erstelle Transkript..." : "Erstelle Transkript...");
         Thread.startVirtualThread(() -> {
-            Path audioInput = input.toAbsolutePath().normalize();
+            Path audioInput = request.input().toAbsolutePath().normalize();
             Path tempAudio = null;
             try {
-                if (extractAudioFirst) {
+                if (request.extractAudioFirst()) {
                     tempAudio = mediaConverter.extractAudioToTemp(audioInput, "wav");
                     audioInput = tempAudio;
                 }
                 transcriptionService.transcribe(
                         audioInput,
-                        output,
-                        transcriptLanguageComboBox.getValue(),
-                        transcriptOutputModeComboBox.getValue(),
-                        speakerName1Field.getText(),
-                        speakerName2Field.getText(),
-                        narratorVoice3Field.getText()
+                        request.output(),
+                        request.language(),
+                        request.outputMode(),
+                        request.speakerName1(),
+                        request.speakerName2(),
+                        request.narratorVoice3()
                 );
-                String transcript = Files.readString(output);
+                Path previewPath = request.structured() ? TranscriptionService.structuredTextPath(request.output()) : request.output();
+                String transcript = Files.readString(Files.isRegularFile(previewPath) ? previewPath : request.output());
                 Platform.runLater(() -> {
                     transcriptionResultArea.setText(transcript);
-                    setRunning(false, "TXT-Datei erstellt: " + output);
+                    if (request.structured()) {
+                        setRunning(false, "JSON und TXT erstellt: " + request.output() + " / " + previewPath);
+                    } else {
+                        setRunning(false, "TXT-Datei erstellt: " + request.output());
+                    }
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -183,21 +331,25 @@ public class TranscriptionController {
     }
 
     private Path transcriptTargetPath(Path source) {
-        String directory = transcriptTargetDirectoryField.getText() == null ? "" : transcriptTargetDirectoryField.getText().trim();
-        String fileName = transcriptTargetNameField.getText() == null ? "" : transcriptTargetNameField.getText().trim();
-        if (directory.isBlank() || fileName.isBlank()) {
+        Path targetDirectory = targetDirectoryPath();
+        String fileName = cleanText(transcriptTargetNameField.getText());
+        if (targetDirectory == null || fileName.isBlank()) {
             return null;
         }
         String extension = transcriptExtension();
         if (!fileName.toLowerCase().endsWith(extension)) {
             fileName = stripKnownTranscriptExtension(fileName) + extension;
         }
-        return Path.of(directory).resolve(fileName).toAbsolutePath().normalize();
+        return targetDirectory.resolve(fileName).toAbsolutePath().normalize();
+    }
+
+    private Path targetDirectoryPath() {
+        String directory = cleanText(transcriptTargetDirectoryField.getText());
+        return directory.isBlank() ? null : Path.of(directory);
     }
 
     private void prepareTargetFrom(Path source) {
-        String extension = transcriptExtension();
-        transcriptTargetNameField.setText(baseName(source) + extension);
+        transcriptTargetNameField.setText(Files.isDirectory(source) ? "" : defaultTranscriptFileName(source));
         if (transcriptTargetDirectoryField.getText() == null || transcriptTargetDirectoryField.getText().isBlank()) {
             transcriptTargetDirectoryField.setText(defaultTranscriptDirectory(source).toString());
         }
@@ -207,6 +359,12 @@ public class TranscriptionController {
         Path parent = source.getParent();
         if (parent == null) {
             return Path.of("Transkript").toAbsolutePath().normalize();
+        }
+        if (Files.isDirectory(source) && "Sounddatei".equalsIgnoreCase(source.getFileName().toString())) {
+            return parent.resolve("Transkript").toAbsolutePath().normalize();
+        }
+        if (Files.isDirectory(source) && "Video".equalsIgnoreCase(source.getFileName().toString())) {
+            return parent.resolve("Transkript").toAbsolutePath().normalize();
         }
         if ("Sounddatei".equalsIgnoreCase(parent.getFileName().toString()) && parent.getParent() != null) {
             return parent.getParent().resolve("Transkript").toAbsolutePath().normalize();
@@ -242,6 +400,16 @@ public class TranscriptionController {
         }
     }
 
+    private List<Path> audioFilesIn(Path directory) throws IOException {
+        try (Stream<Path> files = Files.list(directory)) {
+            return files
+                    .filter(Files::isRegularFile)
+                    .filter(path -> hasExtension(path, AUDIO_EXTENSIONS))
+                    .sorted()
+                    .toList();
+        }
+    }
+
     private boolean hasExtension(Path path, String[] extensions) {
         String fileName = path.getFileName().toString().toLowerCase(Locale.ROOT);
         for (String extension : extensions) {
@@ -258,17 +426,18 @@ public class TranscriptionController {
 
     private void updateTargetExtension() {
         String fileName = transcriptTargetNameField.getText();
+        Path source = sourcePathFromAudioField();
+        if (source != null && Files.isDirectory(source)) {
+            transcriptTargetNameField.clear();
+            return;
+        }
         if (fileName == null || fileName.isBlank()) {
-            String sourceText = audioSourceField.getText() == null ? "" : audioSourceField.getText().trim();
-            Path source = !sourceText.isBlank()
-                    ? Path.of(sourceText)
-                    : null;
             if (source != null) {
-                transcriptTargetNameField.setText(baseName(source) + transcriptExtension());
+                transcriptTargetNameField.setText(defaultTranscriptFileName(source));
             }
             return;
         }
-        transcriptTargetNameField.setText(stripKnownTranscriptExtension(fileName) + transcriptExtension());
+        transcriptTargetNameField.setText(stripKnownTranscriptExtension(fileName) + modeSuffix() + transcriptExtension());
     }
 
     private void setInitialDirectory(FileChooser chooser, Path directory) {
@@ -279,7 +448,7 @@ public class TranscriptionController {
     }
 
     private File currentTargetDirectory() {
-        String configured = transcriptTargetDirectoryField.getText() == null ? "" : transcriptTargetDirectoryField.getText().trim();
+        String configured = cleanText(transcriptTargetDirectoryField.getText());
         if (!configured.isBlank()) {
             return Path.of(configured).toFile();
         }
@@ -289,14 +458,14 @@ public class TranscriptionController {
     private String stripKnownTranscriptExtension(String fileName) {
         String lower = fileName.toLowerCase();
         if (lower.endsWith(".txt") || lower.endsWith(".json")) {
-            return fileName.substring(0, fileName.lastIndexOf('.'));
+            fileName = fileName.substring(0, fileName.lastIndexOf('.'));
         }
-        return fileName;
+        return stripModeSuffix(fileName);
     }
 
     private String transcriptionBackendLabel() {
         if (!config.transcriptionN8nWebhookUrl().isBlank()) {
-            return "Bereit ueber n8n-Webhook.";
+            return "Bereit ueber n8n-Webhook: " + config.transcriptionN8nWebhookUrl();
         }
         if (!config.transcriptionCommand().isBlank()) {
             return "Bereit ueber lokales Transkriptionskommando.";
@@ -310,8 +479,40 @@ public class TranscriptionController {
         return dot <= 0 ? fileName : fileName.substring(0, dot);
     }
 
+    private String defaultTranscriptFileName(Path source) {
+        return baseName(source) + modeSuffix() + transcriptExtension();
+    }
+
+    private String modeSuffix() {
+        return " (" + transcriptMode() + ")";
+    }
+
+    private String transcriptMode() {
+        String mode = cleanText(transcriptOutputModeComboBox.getValue());
+        return mode.isBlank() ? "plain" : mode;
+    }
+
+    private String stripModeSuffix(String value) {
+        String text = value == null ? "" : value.trim();
+        boolean combined = text.toLowerCase(Locale.ROOT).endsWith("-gesamt");
+        if (combined) {
+            text = text.substring(0, text.length() - "-gesamt".length()).trim();
+        }
+        String lower = text.toLowerCase(Locale.ROOT);
+        if (lower.endsWith(" (plain)") || lower.endsWith(" (structured)")) {
+            text = text.substring(0, text.lastIndexOf(" (")).trim();
+        }
+        return combined ? text + "-gesamt" : text;
+    }
+
+    private Path sourcePathFromAudioField() {
+        String sourceText = cleanText(audioSourceField.getText());
+        return sourceText.isBlank() ? null : Path.of(sourceText);
+    }
+
     private void setRunning(boolean running, String message) {
         chooseAudioSourceButton.setDisable(running);
+        chooseAudioSourceDirectoryButton.setDisable(running);
         chooseVideoTranscriptSourceButton.setDisable(running);
         chooseTranscriptTargetDirectoryButton.setDisable(running);
         transcribeAudioButton.setDisable(running);
@@ -321,6 +522,19 @@ public class TranscriptionController {
 
     private void setStatus(String message) {
         transcriptionStatusLabel.setText(message);
+    }
+
+    private String cleanText(String value) {
+        String text = value == null ? "" : value.trim();
+        if (text.length() >= 2 && text.startsWith("\"") && text.endsWith("\"")) {
+            return text.substring(1, text.length() - 1).trim();
+        }
+        return text;
+    }
+
+    private String optionalVoiceName(String value, String placeholder) {
+        String text = cleanText(value);
+        return text.equalsIgnoreCase(placeholder) ? "" : text;
     }
 
     private Window ownerWindow() {

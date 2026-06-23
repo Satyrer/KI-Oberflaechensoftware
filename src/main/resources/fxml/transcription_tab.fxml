@@ -14,10 +14,11 @@
     <Label text="Sounddateien direkt transkribieren oder aus einem Videofile erst Audio extrahieren und danach automatisch eine TXT-Datei erzeugen." wrapText="true" styleClass="remote-admin-help"/>
 
     <GridPane hgap="8" vgap="10">
-        <Label text="Sounddatei" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <Label text="Sounddatei / Ordner" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
         <HBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="1">
-            <TextField fx:id="audioSourceField" promptText="C:\Audio\aufnahme.mp3" HBox.hgrow="ALWAYS"/>
+            <TextField fx:id="audioSourceField" promptText="C:\Audio\aufnahme.mp3 oder C:\Audio\Kapitel" HBox.hgrow="ALWAYS"/>
             <Button fx:id="chooseAudioSourceButton" text="Waehlen"/>
+            <Button fx:id="chooseAudioSourceDirectoryButton" text="Ordner"/>
         </HBox>
 
         <Label text="Videofile direkt" GridPane.rowIndex="1" GridPane.columnIndex="0"/>

@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 public record AppConfig(
         String aiEndpoint,
@@ -82,20 +86,55 @@ public record AppConfig(
         if (configuredPath == null || configuredPath.isBlank()) {
             configuredPath = System.getenv("KI_CONFIG");
         }
-        if (configuredPath == null || configuredPath.isBlank()) {
-            configuredPath = LOCAL_CONFIG_PATH;
+
+        for (Path path : localConfigCandidates(configuredPath)) {
+            if (!Files.isRegularFile(path)) {
+                continue;
+            }
+            try (InputStream stream = Files.newInputStream(path)) {
+                properties.load(stream);
+                return;
+            } catch (IOException ignored) {
+                // System properties and environment variables can still override defaults.
+            }
+        }
+    }
+
+    private static List<Path> localConfigCandidates(String configuredPath) {
+        List<Path> candidates = new ArrayList<>();
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            candidates.add(Path.of(configuredPath.trim()));
+        } else {
+            candidates.add(Path.of(LOCAL_CONFIG_PATH));
+            candidates.addAll(classLocationConfigCandidates());
+
+            String userHome = System.getProperty("user.home");
+            if (userHome != null && !userHome.isBlank()) {
+                candidates.add(Path.of(userHome, "IdeaProjects", "KI Oberflaechensoftware", "config", "local.properties"));
+            }
         }
 
-        Path path = Path.of(configuredPath);
-        if (!Files.isRegularFile(path)) {
-            return;
+        Set<Path> unique = new LinkedHashSet<>();
+        for (Path candidate : candidates) {
+            unique.add(candidate.toAbsolutePath().normalize());
         }
+        return new ArrayList<>(unique);
+    }
 
-        try (InputStream stream = Files.newInputStream(path)) {
-            properties.load(stream);
-        } catch (IOException ignored) {
-            // System properties and environment variables can still override defaults.
+    private static List<Path> classLocationConfigCandidates() {
+        List<Path> candidates = new ArrayList<>();
+        try {
+            Path location = Path.of(AppConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (Files.isRegularFile(location)) {
+                location = location.getParent();
+            }
+            for (Path current = location; current != null; current = current.getParent()) {
+                candidates.add(current.resolve("config").resolve("local.properties"));
+            }
+        } catch (Exception ignored) {
+            // Relative and user-home candidates still cover normal local launches.
         }
+        return candidates;
     }
 
     private static String endpointFromParts(Properties properties) {
