@@ -38,8 +38,12 @@ Der Webhook erwartet Multipart-Felder:
 - `outputMode`: `plain` fuer reine Textausgabe oder `structured` fuer JSON mit Zusatzstruktur.
 - optional `speakerName1`, `speakerName2`, `narratorVoice3` und weitere Sprecher-/Erzaehlstimmen-Felder.
 
-Bei `structured` nutzt der Worker die lokale `mistral-rag`-KI ueber
-`ollama-gateway`. Bei `plain` wird nur der reparierte UTF-8-Transkripttext
+Bei `structured` nutzt der Worker bzw. der n8n-Workflow die lokale
+`mistral-rag`-KI ueber `ollama-gateway`. Die lesbare TXT-Ausgabe beginnt mit
+einer kurzen Zusammenfassung und gliedert das Transkript danach nach Stimmen,
+zum Beispiel `Stimme A: ...`, `Stimme B: ...` oder `Erzähler: ...`.
+Eingetragene Sprecher- und Erzaehlstimmen-Namen werden dabei als Labels
+uebernommen. Bei `plain` wird nur der reparierte UTF-8-Transkripttext
 zurueckgegeben.
 
 Manuell in der VM geht weiterhin:
