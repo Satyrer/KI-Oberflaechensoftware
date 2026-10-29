@@ -13,6 +13,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import kioberflaeche.config.AppConfig;
 import kioberflaeche.media.MediaConverter;
+import kioberflaeche.queue.ActivityRegistry;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -45,7 +46,7 @@ public class MediaConversionController {
         chooseVideoSourceButton.setOnAction(event -> chooseVideoSource());
         chooseAudioTargetDirectoryButton.setOnAction(event -> chooseTargetDirectory());
         convertVideoToAudioButton.setOnAction(event -> convertVideoToAudio());
-        mediaConversionStatusLabel.setText("Bereit. ffmpeg: " + config.ffmpegPath());
+        mediaConversionStatusLabel.setText("Bereit. ffmpeg: " + converter.ffmpegPath());
     }
 
     private void chooseVideoSource() {
@@ -86,14 +87,17 @@ public class MediaConversionController {
         }
         Path output = outputDirectory.resolve(ensureExtension(outputName, selectedOutputFormat())).toAbsolutePath().normalize();
         setRunning(true, "Konvertiere Video zu Audio...");
+        var activity = ActivityRegistry.shared().start("Medien", input.getFileName().toString(), "Audio wird extrahiert");
         Thread.startVirtualThread(() -> {
             try {
                 converter.extractAudio(input.toAbsolutePath().normalize(), output, selectedOutputFormat());
+                activity.done("Audio-Datei erstellt");
                 Platform.runLater(() -> {
                     mediaConversionLogArea.setText("Erstellt:\n" + output);
                     setRunning(false, "Audio-Datei erstellt.");
                 });
             } catch (Exception e) {
+                activity.failed("Audio-Extraktion fehlgeschlagen");
                 Platform.runLater(() -> {
                     mediaConversionLogArea.setText(e.getMessage());
                     setRunning(false, "Konvertierung fehlgeschlagen.");

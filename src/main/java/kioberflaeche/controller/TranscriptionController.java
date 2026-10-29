@@ -12,8 +12,11 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import kioberflaeche.config.AppConfig;
+import kioberflaeche.ai.ModelCatalogClient;
+import kioberflaeche.ui.ModelPicker;
 import kioberflaeche.media.MediaConverter;
 import kioberflaeche.media.TranscriptionService;
+import kioberflaeche.queue.ActivityRegistry;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +28,7 @@ import java.util.Locale;
 import java.util.stream.Stream;
 
 public class TranscriptionController {
-    private static final Path TRANSCRIPTION_ROOT = Path.of("F:\\Virtuelle Maschinenen\\SchreibAI\\Transkripte");
+    private static final Path TRANSCRIPTION_ROOT = Path.of("C:\\KI Arbeitsbereich\\SchreibAI\\Transkripte");
     private static final Path DEFAULT_SOUND_DIRECTORY = TRANSCRIPTION_ROOT.resolve("Sounddatei");
     private static final Path DEFAULT_VIDEO_DIRECTORY = TRANSCRIPTION_ROOT.resolve("Video");
     private static final Path DEFAULT_TRANSCRIPT_DIRECTORY = TRANSCRIPTION_ROOT.resolve("Transkript");
@@ -37,7 +40,9 @@ public class TranscriptionController {
     @FXML private TextField transcriptTargetDirectoryField;
     @FXML private TextField transcriptTargetNameField;
     @FXML private ComboBox<String> transcriptLanguageComboBox;
+    @FXML private ComboBox<String> transcriptModelComboBox;
     @FXML private ComboBox<String> transcriptOutputModeComboBox;
+    @FXML private ComboBox<String> transcriptAudioFormatComboBox;
     @FXML private TextField speakerName1Field;
     @FXML private TextField speakerName2Field;
     @FXML private TextField narratorVoice3Field;
@@ -51,6 +56,11 @@ public class TranscriptionController {
     @FXML private Label transcriptionStatusLabel;
     @FXML private TextArea transcriptionResultArea;
 
+    @FXML private ComboBox<ModelCatalogClient.Option> structureModelCombo;
+    @FXML private Label structureModelHint;
+    @FXML private Button refreshStructureModelsButton;
+    private ModelPicker structureModelPicker;
+    private String pendingStructureSelection="auto";
     private AppConfig config;
     private MediaConverter mediaConverter;
     private TranscriptionService transcriptionService;
@@ -59,10 +69,13 @@ public class TranscriptionController {
             Path input,
             Path output,
             String language,
+            String asrModel,
             String outputMode,
+            String modelSelection,
             String speakerName1,
             String speakerName2,
             String narratorVoice3,
+            String audioFormat,
             boolean extractAudioFirst
     ) {
         boolean structured() {
@@ -89,12 +102,20 @@ public class TranscriptionController {
         );
         String defaultLanguage = config.transcriptionDefaultLanguage();
         transcriptLanguageComboBox.setValue(transcriptLanguageComboBox.getItems().contains(defaultLanguage) ? defaultLanguage : "de");
+        transcriptModelComboBox.getItems().setAll("Whisper small (bisher)", "Whisper large-v3 (Genauigkeit)");
+        transcriptModelComboBox.getSelectionModel().selectFirst();
         transcriptOutputModeComboBox.getItems().setAll("plain", "structured");
         transcriptOutputModeComboBox.setValue("plain");
-        transcriptOutputModeComboBox.valueProperty().addListener((observable, oldValue, newValue) -> updateTargetExtension());
-        speakerName1Field.setText("Sprechername1");
-        speakerName2Field.setText("Sprechername2");
-        narratorVoice3Field.setText("Erzaehlstimme 3");
+        structureModelPicker=new ModelPicker(structureModelCombo,structureModelHint,refreshStructureModelsButton,()->"transcription_structure");
+        structureModelPicker.usePreference("transcription.structureModel");
+        structureModelPicker.configure(ModelCatalogClient.workflow(config.n8nSchreibAiBaseUrl()));
+        structureModelPicker.setLocked(true);
+        transcriptOutputModeComboBox.valueProperty().addListener((observable, oldValue, newValue) -> { updateTargetExtension(); structureModelPicker.setLocked(!"structured".equals(newValue)); });
+        transcriptAudioFormatComboBox.getItems().setAll("mp3", "wav", "m4a", "flac", "ogg", "opus");
+        transcriptAudioFormatComboBox.setValue("mp3");
+        speakerName1Field.clear();
+        speakerName2Field.clear();
+        narratorVoice3Field.clear();
         fullTranscriptCheckBox.setSelected(true);
         chooseAudioSourceButton.setOnAction(event -> chooseAudioSource());
         chooseAudioSourceDirectoryButton.setOnAction(event -> chooseAudioSourceDirectory());
@@ -160,6 +181,7 @@ public class TranscriptionController {
     }
 
     private void transcribeAudio() {
+        if(!validateStructureSelection()) return;
         String inputText = cleanText(audioSourceField.getText());
         if (inputText.isBlank()) {
             setStatus("Bitte zuerst eine Sounddatei auswaehlen.");
@@ -179,6 +201,7 @@ public class TranscriptionController {
     }
 
     private void transcribeVideo() {
+        if(!validateStructureSelection()) return;
         String inputText = cleanText(videoTranscriptSourceField.getText());
         if (inputText.isBlank()) {
             setStatus("Bitte zuerst eine Videodatei auswaehlen.");
@@ -217,12 +240,22 @@ public class TranscriptionController {
                 input,
                 output,
                 language.isBlank() ? config.transcriptionDefaultLanguage() : language,
+                selectedAsrModel(),
                 outputMode.isBlank() ? "plain" : outputMode,
-                optionalVoiceName(speakerName1Field.getText(), "Sprechername1"),
-                optionalVoiceName(speakerName2Field.getText(), "Sprechername2"),
-                optionalVoiceName(narratorVoice3Field.getText(), "Erzaehlstimme 3"),
+                pendingStructureSelection,
+                optionalVoiceName(speakerName1Field.getText(), "Sprecher 1"),
+                optionalVoiceName(speakerName2Field.getText(), "Sprecher 2"),
+                optionalVoiceName(narratorVoice3Field.getText(), "Erzaehlstimme 1"),
+                selectedAudioFormat(),
                 extractAudioFirst
         );
+    }
+
+    private boolean validateStructureSelection() {
+        pendingStructureSelection="auto";
+        if(!"structured".equals(transcriptOutputModeComboBox.getValue())) return true;
+        try { pendingStructureSelection=structureModelPicker.selection(); return true; }
+        catch(IOException error) { setStatus(error.getMessage()); return false; }
     }
 
     private void runTranscriptions(BatchTranscriptionRequest batch) {
@@ -236,6 +269,9 @@ public class TranscriptionController {
         }
 
         setRunning(true, "Erstelle Transkripte fuer " + batch.requests().size() + " Sounddateien...");
+        transcriptionResultArea.clear();
+        var activities = batch.requests().stream().map(request -> ActivityRegistry.shared().waiting(
+                "Transkription", request.input().getFileName().toString(), "Wartet im Dateistapel")).toList();
         Thread.startVirtualThread(() -> {
             List<String> combinedSections = new ArrayList<>();
             int completed = 0;
@@ -243,19 +279,24 @@ public class TranscriptionController {
                 for (TranscriptionRequest request : batch.requests()) {
                     completed++;
                     int current = completed;
+                    activities.get(current - 1).running("Datei " + current + "/" + batch.requests().size()
+                            + " - Whisper " + request.asrModel());
                     Platform.runLater(() -> setStatus("Transkribiere " + current + "/" + batch.requests().size() + ": " + request.input().getFileName()));
-                    transcriptionService.transcribe(
+                    TranscriptionService.TranscriptionResult result = transcriptionService.transcribe(
                             request.input().toAbsolutePath().normalize(),
                             request.output(),
                             request.language(),
+                            request.asrModel(),
                             request.outputMode(),
                             request.speakerName1(),
                             request.speakerName2(),
-                            request.narratorVoice3()
+                            request.narratorVoice3(), request.modelSelection()
                     );
-                    Path previewPath = request.structured() ? TranscriptionService.structuredTextPath(request.output()) : request.output();
-                    String transcript = Files.readString(Files.isRegularFile(previewPath) ? previewPath : request.output());
-                    combinedSections.add("## " + request.input().getFileName() + System.lineSeparator() + System.lineSeparator() + transcript.strip());
+                    Path previewPath = previewPath(request);
+                    String transcript = Files.readString(previewPath);
+                    activities.get(current - 1).done("Transkript gespeichert");
+                    combinedSections.add("## " + request.input().getFileName() + System.lineSeparator() + result.summary()
+                            + System.lineSeparator() + System.lineSeparator() + transcript.strip());
                 }
 
                 String combinedTranscript = String.join(System.lineSeparator() + System.lineSeparator(), combinedSections).strip();
@@ -272,6 +313,10 @@ public class TranscriptionController {
                     setRunning(false, message);
                 });
             } catch (Exception e) {
+                if (completed > 0) activities.get(completed - 1).failed("Transkription oder Ergebnisspeicherung fehlgeschlagen");
+                for (int index = completed; index < activities.size(); index++) {
+                    activities.get(index).cancelled("Nicht gestartet: vorherige Datei im Stapel fehlgeschlagen");
+                }
                 Platform.runLater(() -> {
                     transcriptionResultArea.setText(e.getMessage());
                     setRunning(false, "Batch-Transkription fehlgeschlagen.");
@@ -286,27 +331,47 @@ public class TranscriptionController {
             return;
         }
         setRunning(true, request.extractAudioFirst() ? "Extrahiere Audio und erstelle Transkript..." : "Erstelle Transkript...");
+        transcriptionResultArea.clear();
+        var activity = ActivityRegistry.shared().start("Transkription", request.input().getFileName().toString(),
+                request.extractAudioFirst() ? "Audio wird extrahiert" : "Transkription wird vorbereitet");
         Thread.startVirtualThread(() -> {
             Path audioInput = request.input().toAbsolutePath().normalize();
-            Path tempAudio = null;
             try {
+                logTranscription("Start: " + request.input());
+                logTranscription("Ziel: " + request.output());
                 if (request.extractAudioFirst()) {
-                    tempAudio = mediaConverter.extractAudioToTemp(audioInput, "wav");
-                    audioInput = tempAudio;
+                    Path extractedAudio = extractedAudioPath(request);
+                    logTranscription("Extrahiere Video-Audio (" + request.audioFormat() + "): " + extractedAudio);
+                    mediaConverter.extractAudio(audioInput, extractedAudio, request.audioFormat());
+                    long audioSize = Files.size(extractedAudio);
+                    logTranscription("Audio erstellt: " + extractedAudio + " (" + audioSize + " Bytes)");
+                    if (audioSize <= 0) {
+                        throw new IOException("Extrahierte Audiodatei ist leer: " + extractedAudio);
+                    }
+                    audioInput = extractedAudio;
                 }
-                transcriptionService.transcribe(
+                logTranscription("Starte Transkription: " + audioInput.getFileName() + " mit Whisper " + request.asrModel());
+                activity.running("Transkription mit Whisper " + request.asrModel() + "; Antwort ausstehend");
+                TranscriptionService.TranscriptionResult result = transcriptionService.transcribe(
                         audioInput,
                         request.output(),
                         request.language(),
+                        request.asrModel(),
                         request.outputMode(),
                         request.speakerName1(),
                         request.speakerName2(),
-                        request.narratorVoice3()
+                        request.narratorVoice3(), request.modelSelection()
                 );
-                Path previewPath = request.structured() ? TranscriptionService.structuredTextPath(request.output()) : request.output();
-                String transcript = Files.readString(Files.isRegularFile(previewPath) ? previewPath : request.output());
+                Path previewPath = previewPath(request);
+                String transcript = Files.readString(previewPath);
+                activity.done("Transkript gespeichert");
+                logTranscription(result.summary());
+                logTranscription("Transkription geschrieben: " + request.output() + " (" + Files.size(request.output()) + " Bytes)");
+                if (!previewPath.equals(request.output())) {
+                    logTranscription("Lesbare TXT geschrieben: " + previewPath + " (" + Files.size(previewPath) + " Bytes)");
+                }
                 Platform.runLater(() -> {
-                    transcriptionResultArea.setText(transcript);
+                    transcriptionResultArea.appendText(System.lineSeparator() + System.lineSeparator() + transcript);
                     if (request.structured()) {
                         setRunning(false, "JSON und TXT erstellt: " + request.output() + " / " + previewPath);
                     } else {
@@ -317,17 +382,29 @@ public class TranscriptionController {
                 Platform.runLater(() -> {
                     transcriptionResultArea.setText(e.getMessage());
                     setRunning(false, "Transkription fehlgeschlagen.");
+                    activity.failed("Transkription fehlgeschlagen; Details im Transkriptions-Tab");
                 });
-            } finally {
-                if (tempAudio != null) {
-                    try {
-                        Files.deleteIfExists(tempAudio);
-                    } catch (Exception ignored) {
-                        // Temporary audio cleanup must not hide the real transcription result.
-                    }
-                }
             }
         });
+    }
+
+    private Path extractedAudioPath(TranscriptionRequest request) {
+        String baseName = stripKnownTranscriptExtension(cleanText(transcriptTargetNameField.getText()));
+        if (baseName.isBlank()) {
+            baseName = baseName(request.input()) + modeSuffix();
+        }
+        return request.output().getParent()
+                .resolve(baseName + " (Audio)." + MediaConverter.cleanFormat(request.audioFormat(), "wav"))
+                .toAbsolutePath()
+                .normalize();
+    }
+
+    private Path previewPath(TranscriptionRequest request) throws IOException {
+        if (!request.structured()) {
+            return request.output();
+        }
+        Path sidecar = TranscriptionService.structuredTextPath(request.output());
+        return Files.isRegularFile(sidecar) && Files.size(sidecar) > 0 ? sidecar : request.output();
     }
 
     private Path transcriptTargetPath(Path source) {
@@ -464,13 +541,14 @@ public class TranscriptionController {
     }
 
     private String transcriptionBackendLabel() {
+        String mediaBackend = mediaConverter == null ? "" : " Video-Audio: " + mediaConverter.ffmpegPath();
         if (!config.transcriptionN8nWebhookUrl().isBlank()) {
-            return "Bereit ueber n8n-Webhook: " + config.transcriptionN8nWebhookUrl();
+            return "Bereit ueber n8n-Webhook: " + config.transcriptionN8nWebhookUrl() + mediaBackend;
         }
         if (!config.transcriptionCommand().isBlank()) {
-            return "Bereit ueber lokales Transkriptionskommando.";
+            return "Bereit ueber lokales Transkriptionskommando." + mediaBackend;
         }
-        return "Bereit. Standardkommando: whisper aus dem PATH.";
+        return "Bereit. Standardkommando: whisper aus dem PATH." + mediaBackend;
     }
 
     private String baseName(Path path) {
@@ -490,6 +568,14 @@ public class TranscriptionController {
     private String transcriptMode() {
         String mode = cleanText(transcriptOutputModeComboBox.getValue());
         return mode.isBlank() ? "plain" : mode;
+    }
+
+    private String selectedAsrModel() {
+        return "Whisper large-v3 (Genauigkeit)".equals(transcriptModelComboBox.getValue()) ? "large-v3" : "small";
+    }
+
+    private String selectedAudioFormat() {
+        return MediaConverter.cleanFormat(transcriptAudioFormatComboBox.getValue(), "mp3");
     }
 
     private String stripModeSuffix(String value) {
@@ -517,11 +603,25 @@ public class TranscriptionController {
         chooseTranscriptTargetDirectoryButton.setDisable(running);
         transcribeAudioButton.setDisable(running);
         transcribeVideoButton.setDisable(running);
+        transcriptAudioFormatComboBox.setDisable(running);
+        transcriptModelComboBox.setDisable(running);
+        transcriptOutputModeComboBox.setDisable(running);
+        structureModelPicker.setLocked(running || !"structured".equals(transcriptOutputModeComboBox.getValue()));
         setStatus(message);
     }
 
     private void setStatus(String message) {
         transcriptionStatusLabel.setText(message);
+    }
+
+    private void logTranscription(String message) {
+        Platform.runLater(() -> {
+            if (transcriptionResultArea.getText().isBlank()) {
+                transcriptionResultArea.setText(message);
+            } else {
+                transcriptionResultArea.appendText(System.lineSeparator() + message);
+            }
+        });
     }
 
     private String cleanText(String value) {
