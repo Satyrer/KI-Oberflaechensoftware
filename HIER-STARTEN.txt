@@ -1,0 +1,42 @@
+AKTIVE JAVA-OBERFLAECHE AB 8. OKTOBER 2026
+
+Projekt:
+C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware
+
+In IntelliJ IDEA:
+1. File > Open waehlen und genau den oben genannten Ordner oeffnen.
+   Der Projektname lautet "KI Oberflaechensoftware - Aktiver Stand".
+2. Das vorhandene Maven-Projekt verwenden/importieren.
+3. Die vorhandene Run Configuration "KI Chat starten" auswaehlen und starten.
+   Ihre Hauptklasse ist kioberflaeche.Main, ihr Arbeitsverzeichnis das Projekt.
+
+Die bestehende laufende Anwendung/IDE wurde beim Umzug nicht beendet. Eine
+bereits laufende Anwendung benutzt weiterhin ihren gestarteten Stand. Fuer die
+aktualisierte Oberflaeche beim naechsten normalen Start das neue Projekt verwenden.
+
+Der alte Ordner
+C:\Users\User\IdeaProjects\KI Oberflaechensoftware
+bleibt als Rueckfall erhalten und ist keine aktive Entwicklungsquelle mehr.
+
+config und chats wurden vollstaendig privat mitkopiert. Story-Arbeitsprojekte
+bleiben in C:\KI Arbeitsbereich\SchreibAI\Arbeitsprojekte.
+
+Bedienung: docs\benutzerhandbuch.md, Abschnitt 17.
+Ausfuehrlicher Story-Ablauf: docs\story-arbeitsbereich.txt.
+Fuer lokale Vorbereitung/Pruefung muss die VM nicht laufen; fuer neue KI-Auftraege
+muss das System gestartet sein. Den letzten VM-Status nennt der Abschlussbericht.
+
+NEU AB 16. OKTOBER 2026
+Modellwahl und automatische Zuordnung: docs\modellwahl-20261016.txt.
+Alternativer Projektstarter: Start-KI.ps1 (benutzt target\desktop).
+Desktop-Paket neu erstellen: Build-KI.ps1.
+Isolierte Pruefung: tests\Run-ModelSelectionTests.ps1.
+Eine bereits laufende Anwendung normal neu starten, um den neuen Stand zu nutzen.
+
+STARTKONTROLLE AB 29. OKTOBER 2026
+Der aktuelle Stand zeigt im KI-Chat die Modellwahl einschliesslich Dolphin und
+die Option zur getrennten Anzeige ohne Speicherung. Die Auftragsuebersicht ist
+der Tab "Queue" in derselben Anwendung, kein separates Programm.
+Fehlen diese Elemente, den Startpfad pruefen: nicht den alten IdeaProjects-Stand
+verwenden. Start-KI.ps1 startet stets das Desktop-Paket dieses Projektordners
+mit sichtbarem Fenster. Build-KI.ps1 erstellt das Paket aus den lokalen Quellen.

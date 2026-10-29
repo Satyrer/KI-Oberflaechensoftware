@@ -16,12 +16,12 @@ Wenn weder n8n-Webhook noch Kommando gesetzt ist, versucht die App `whisper` aus
 
 ## n8n-Workflow und Deploy-Paket
 
-`deploy/schreibai-transcription` ist das passende Deploy-Paket fuer den vorhandenen SchreibAI/n8n-Stack unter `F:\Virtuelle Maschinenen\SchreibAI`.
+`deploy/schreibai-transcription` ist das passende Deploy-Paket fuer den vorhandenen SchreibAI/n8n-Stack unter `C:\KI Arbeitsbereich\SchreibAI`.
 
 Fuer die laufende VM wird das Paket als ZIP in den bestehenden Shared-Auto-Installer gelegt:
 
 ```text
-F:\Virtuelle Maschinenen\Eigene AI\Shared\inbox\schreib-ai-transcription-v2.zip
+C:\KI Arbeitsbereich\Eigene AI\Shared\inbox\schreib-ai-transcription-v2.zip
 ```
 
 Der Auto-Installer entpackt das ZIP in der VM und startet die enthaltene `install.sh`.

@@ -72,7 +72,7 @@ Diese Hinweise passen eher zu einer VM-/Host-/I/O-Blockade als zu einer falschen
 
 ## Aktueller Arbeitsauftrag Aus KI-Projekt
 
-In `F:\Virtuelle Maschinenen\Eigene AI\Aktueller Befehl.txt` steht als naechster fachlicher Auftrag:
+In `C:\KI Arbeitsbereich\Eigene AI\Aktueller Befehl.txt` steht als naechster fachlicher Auftrag:
 
 - Ein vorschaltbares Modul soll Prompts und Dokumente vor der Weiterleitung an das Modell pruefen.
 - Es soll nach ungewoehnlichen Systembefehlen oder System-Rollen-Wechseln suchen.

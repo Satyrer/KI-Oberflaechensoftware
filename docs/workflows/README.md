@@ -13,7 +13,7 @@ Diese Dateien sind dokumentierte Kopien der n8n-Workflows, die zur KI-Oberflaech
 Die RAG- und Review-Workflows stammen aus dem lokalen KI/n8n-Stack:
 
 ```text
-F:\Virtuelle Maschinenen\Eigene AI\Projekt\eigene-ai-rag\workflows\
+C:\KI Arbeitsbereich\Eigene AI\Projekt\eigene-ai-rag\workflows\
 ```
 
 Der Transkriptions-Workflow stammt aus:

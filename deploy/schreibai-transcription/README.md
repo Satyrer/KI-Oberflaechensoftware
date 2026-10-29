@@ -22,7 +22,7 @@ Die App leitet diesen Pfad automatisch aus `n8n.web.baseUrl` oder `n8n.host`/`n8
 ZIP-Datei in den Shared-Ordner legen:
 
 ```text
-F:\Virtuelle Maschinenen\Eigene AI\Shared\inbox
+C:\KI Arbeitsbereich\Eigene AI\Shared\inbox
 ```
 
 Der Auto-Installer in der VM entpackt das Paket und startet `install.sh`. Danach ist der Webhook aktiv:
