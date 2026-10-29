@@ -1,0 +1,17 @@
+DIESER ORDNER IST NUR NOCH DER RUECKFALLSTAND
+8. Oktober 2026
+
+Die vollstaendige Java-Oberflaeche wurde kopiert und geprueft.
+Aktive Entwicklung und neue Starts erfolgen ab sofort hier:
+
+C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware
+
+Diesen neuen Ordner in IntelliJ oeffnen und "KI Chat starten" verwenden.
+HIER-STARTEN.txt im neuen Projekt beschreibt den Einstieg.
+
+Der alte Ordner wurde nicht geloescht oder durch eine Verknuepfung ersetzt.
+Er bleibt als Rueckfall erhalten. Nicht parallel hier weiterentwickeln oder
+gesamte Verzeichnisse ueber neuere Daten im neuen Projekt kopieren.
+
+Kopier-, Hash- und Buildnachweis:
+C:\KI Arbeitsbereich\Aenderungen-2026-10-08-Story-Oberflaeche\JAVA-STANDORT-AENDERUNGEN.txt
