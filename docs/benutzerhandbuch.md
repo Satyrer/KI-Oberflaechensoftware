@@ -18,8 +18,13 @@ Die Oberflaeche bietet:
 - Import von n8n-WebUI-Chats aus `/home/chat`
 - lokaler Import von Markdown-Anhaengen in den jeweiligen Chatordner
 - finales Loeschen eines einzeln ausgewaehlten n8n-WebUI-Chats
+- Programmieragent mit Projektzugang, Auftragsstatus, UML-Diagrammen, Gesamtdiff und gesondert bestätigter Übernahme; siehe [Agentenansicht](agentenansicht.md)
 
 Die Anwendung speichert Zugangsdaten und lokale Pfade nicht im Git-Repository. Diese Werte liegen in der lokalen Datei `config/local.properties`.
+
+Ausnahme für den Programmieragenten: Projekt- und Operator-Token werden im
+jeweiligen verdeckten Eingabefeld erfasst und ausschließlich im Speicher der
+Sitzung gehalten. Sie werden nicht in der lokalen Konfiguration gespeichert.
 
 ## 2. Voraussetzungen
 
@@ -37,7 +42,8 @@ Die KI-VM muss nicht fuer lokale Chatverwaltung, Export oder Oberflaechenarbeit 
 
 ### Start In IntelliJ IDEA
 
-1. Projekt in IntelliJ IDEA oeffnen.
+1. In IntelliJ IDEA den aktiven Ordner
+   `C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware` oeffnen.
 2. Oben rechts die Run Configuration `KI Chat starten` auswaehlen.
 3. Auf Start klicken.
 
@@ -53,6 +59,13 @@ Falls die Run Configuration nicht sichtbar ist:
 2. Eine neue `Application`-Konfiguration anlegen.
 3. Main class setzen auf `kioberflaeche.Main`.
 4. Working directory auf das Projektverzeichnis setzen.
+
+Der fruehere Ordner unter `C:\Users\User\IdeaProjects` ist seit dem
+8. Oktober 2026 nur noch der erhaltene Rueckfallstand. Die laufende IDE/Anwendung
+wurde nicht beendet; beim naechsten normalen Start den neuen Ordner verwenden.
+Der automatische Konfigurations-Rueckgriff auf den alten IdeaProjects-Ordner ist
+im neuen Stand entfernt. Die mitkopierte lokale Konfiguration des neuen Projekts
+und ausdruecklich gesetzte `ki.config`-/`KI_CONFIG`-Pfade bleiben unterstuetzt.
 
 ## 4. Lokale Konfiguration
 
@@ -502,3 +515,67 @@ KI_CONFIG
 7. Rechte n8n-WebUI-Verwaltung nur verwenden, wenn die KI-VM laeuft.
 8. `Video zu Sound` fuer MP4/MOV/MKV zu MP3/WAV/M4A nutzen.
 9. `Sound zu TXT` fuer Audio- oder Video-Transkripte nutzen.
+
+
+## 17. Story-Arbeitsbereich (8. Oktober 2026)
+
+Der Tab `Schreib-AI` fuehrt Projekt/Quellen, konkreten Auftrag und sichtbare
+Vorschlagspruefung zusammen. Details, Vorher-/Nachher-Zuordnung und Fehlerbehandlung
+stehen in der [Dokumentation zum Story-Arbeitsbereich](story-arbeitsbereich.txt).
+
+1. Ein bestehendes Projekt waehlen oder ein neues Projekt mit Namen und freiem
+   Briefing anlegen. Das Briefing bleibt als `sources/story-briefing.md` erhalten.
+2. `Kontext aus Quellen aufbauen / aktualisieren` oder `Szene schreiben / fortsetzen`
+   auswaehlen. Alle regulaeren Textquellen und vorhandenen Kontextdateien werden
+   vollstaendig an den Auftrag uebergeben; bekannte automatische Kopien und
+   interne Journale werden ausgeschlossen.
+3. Sprache und kurzen Auftrag festlegen. Der Auftrag darf inklusive optionalem
+   Dateiverweis 1200 UTF-8-Bytes enthalten. Lange Inhalte gehoeren in die Quellen.
+4. Bei Szenen ein Ziel unter `manuscript/` mit `.md` angeben. Die UI schlaegt eine
+   neue freie Datei vor. Ein vorhandenes Ziel wird erst nach Pruefung vollstaendig
+   ersetzt; es gibt kein automatisches Anhaengen.
+5. Im Ergebnis Original und editierbaren Vorschlag vergleichen, dann einzelne
+   oder alle offenen Vorschlaege uebernehmen. Zwischenzeitlich anderweitig
+   geaenderte Dateien werden als Konflikt erhalten.
+
+Die frueheren Einzelangaben `Kapitel`, `Timeline-Zeitpunkt` und `Schritte` sowie
+getrennte Entwurfs-/Analyse-/Fortsetzungsformulare entfallen im Hauptablauf.
+Sachangaben gehoeren in Quellen/Kontext; Arbeitsziele in den gemeinsamen Auftrag.
+
+Fehlgeschlagene Auftraege und ihre empfangenen Analysenachweise bleiben als eigene
+Zwischenstaende erhalten. Die Liste bietet neueste Auftraege zuerst; `Laden`
+oeffnet genau den gewaehlten Stand. Erfolgreich angenommene Dateien erhalten
+gezielte Backups. Unterbrochene Uebernahmen lassen sich anhand des gesicherten
+Schreibinhalts abschliessen. Die ausfuehrliche Dokumentation beschreibt Grenzen
+bei Netzwerkabbruch und laufenden Modellauftraegen.
+
+Eine formal gueltige negative Modellbewertung kennzeichnet den Vorschlag zur
+menschlichen Pruefung (`needs_human_review`). Sie fuehrt weder zu automatischer
+Umschreibung noch allein zum Abbruch. Der Hinweis bleibt auch nach dem Laden
+des Zwischenstands sichtbar. Technische Fehler, zum Beispiel ungueltige Antworten
+oder Zeitueberschreitungen, verhindern weiterhin ein uebernehmbares Ergebnis.
+Jeder Vorschlag muss bewusst anhand von Original und Entwurf uebernommen werden.
+
+Standardarbeitsplatz: `C:\KI Arbeitsbereich\SchreibAI\Arbeitsprojekte`.
+Lokales Vorbereiten und Pruefen ist ohne VM moeglich; fuer KI-Auftraege muss die VM
+laufen. Umfangreiche CPU-Auswertungen koennen lange dauern. Englisch bleibt die
+anfängliche Ausgabesprache, eine bewusste Auswahl wird pro Projekt gespeichert.
+
+## 18. Modelle gezielt auswaehlen oder automatisch zuordnen
+
+Chat, Story-Auftrag und strukturierte Transkription bieten ab 16. Oktober 2026
+eine Modellliste aus dem laufenden System. `Automatisch (nach Aufgabe)` erlaubt
+die serverseitige Zuordnung; eine ausdrueckliche Modellwahl wird verbindlich
+angefordert und bei fehlender Verfuegbarkeit nicht still ersetzt. `Liste laden`
+aktualisiert nur die Auswahl, ohne Modelle in den Arbeitsspeicher zu laden.
+
+Im Chat kann die Aufgabenart automatisch erkannt oder als Gespraech,
+Programmierung/Fehlersuche bzw. Guard-Untersuchung vorgegeben werden. Vorhandene
+Guard-Regeln bleiben eine separate Einstellung. Bei Storys sind unterschiedliche
+Modelle je Auswertungs-/Schreib-/Pruefphase im automatischen Modus moeglich.
+Das tatsaechlich verwendete Modell und seine Begruendung erscheinen am Ergebnis.
+
+Die bewusste Wahl bleibt nach Neustart erhalten; Storyprojekte haben jeweils
+ihre eigene Modellwahl. Die Spracherkennung bleibt bei Whisper small/large-v3;
+die neue Textmodellwahl betrifft nur die optionale strukturierte Ausgabe.
+Details, Fehlerverhalten, Starter und Tests: [Modellwahl](modellwahl-20261016.txt).
