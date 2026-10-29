@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<VBox fx:id="agentRoot" xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.AgentPaneController"
+      styleClass="agent-pane" spacing="10" minWidth="400">
+    <Label text="Programmieragent" styleClass="agent-title"/>
+    <Label fx:id="connectionLabel" text="Verbindung noch nicht eingerichtet" styleClass="agent-help" wrapText="true"/>
+    <HBox spacing="8">
+        <PasswordField fx:id="projectToken" promptText="Projekt-Zugangstoken · bleibt nur im Speicher" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="connectButton" text="Verbinden" onAction="#connect"/>
+        <Button fx:id="disconnectButton" text="Trennen" onAction="#disconnect"/>
+    </HBox>
+    <Label fx:id="agentStatus" text="Zugang eingeben und verbinden. Es startet kein Auftrag automatisch." wrapText="true" styleClass="agent-status"/>
+    <Label fx:id="qualityStatus" text="Aufgabenqualität: noch keine Prüfung belegt." wrapText="true" styleClass="agent-help"/>
+    <TabPane fx:id="agentSections" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS" styleClass="agent-tabs">
+        <Tab text="Auftrag">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                <VBox spacing="12" styleClass="agent-content">
+                    <Label text="Freigegebenes Projekt" styleClass="agent-section"/>
+                    <ComboBox fx:id="agentProjectCombo" maxWidth="Infinity" promptText="Projekte nach dem Verbinden laden"/>
+                    <Label fx:id="qualityProfileHint" text="Das Aufgabenprüfprofil erscheint nach der Projektauswahl." wrapText="true" styleClass="agent-help"/>
+                    <VBox fx:id="requestForm" spacing="10">
+                        <Label text="Aufgabe" styleClass="agent-section"/>
+                        <TextArea fx:id="taskText" promptText="Was soll der Agent im ausgewählten Projekt bearbeiten?" wrapText="true" prefRowCount="5"/>
+                        <Label text="Modell für Programmierung"/>
+                        <HBox spacing="8">
+                            <ComboBox fx:id="agentModel" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                            <Button fx:id="refreshModels" text="Liste laden"/>
+                        </HBox>
+                        <Label fx:id="modelHint" wrapText="true" styleClass="agent-help"/>
+                        <FlowPane hgap="12" vgap="8">
+                            <VBox spacing="4"><Label text="Agentenzeit (Sekunden)"/><Spinner fx:id="modelSeconds" prefWidth="165"/></VBox>
+                            <VBox spacing="4"><Label text="Normale Modellversuche"/><Spinner fx:id="actionBudget" prefWidth="155"/></VBox>
+                            <VBox spacing="4"><Label text="Reparaturrunden"/><Spinner fx:id="roundBudget" prefWidth="135"/></VBox>
+                        </FlowPane>
+                        <Label text="Gemeinsames Zeitbudget: 1.800 Sekunden für Agentenaufrufe und Verarbeitung einschließlich Reparaturen. Manuelles Warten auf Tests und Prüfung zählt nicht dazu. Die Statusabfrage läuft auch bei langen Aufrufen weiter." wrapText="true" styleClass="agent-help"/>
+                        <TitledPane text="Dokumentfreigaben (optional)" expanded="false" animated="false">
+                            <VBox spacing="6">
+                                <Label text="Nur bereits geprüfte Freigaben verwenden. Je Zeile: Kontext-ID, Revision und SHA-256, getrennt durch Leerzeichen." wrapText="true" styleClass="agent-help"/>
+                                <TextArea fx:id="documentReferences" promptText="Kontext-ID Revision SHA-256" prefRowCount="3" wrapText="true"/>
+                            </VBox>
+                        </TitledPane>
+                        <TitledPane text="UML-Diagramme" expanded="true" animated="false">
+                            <VBox spacing="6">
+                                <CheckBox fx:id="umlEnabled" text="UML-Werkzeug für diesen Auftrag einschalten"/>
+                                <Label text="Pflichtdiagramme: je Zeile Kennung und Typ class (Klassen) oder object (Objekte). Beispiel: objektmodell object" wrapText="true" styleClass="agent-help"/>
+                                <TextArea fx:id="requiredDiagrams" promptText="objektmodell object" prefRowCount="2"/>
+                            </VBox>
+                        </TitledPane>
+                    </VBox>
+                    <FlowPane hgap="8" vgap="8">
+                        <Button fx:id="startButton" text="Auftrag starten" onAction="#start" styleClass="agent-primary"/>
+                        <Button fx:id="queueAddButton" text="Zur Warteliste hinzufügen" onAction="#queueAdd"/>
+                        <Button fx:id="newButton" text="Neuer Auftrag" onAction="#newTask"/>
+                    </FlowPane>
+                    <Label text="Bis zu 10 normale Modellversuche; bei eingeschaltetem UML zusätzlich höchstens 3 Versuche je Diagramm, maximal 4 Diagramm-IDs. Ein Entwurf für die Warteliste lässt sich auch während eines laufenden Auftrags bearbeiten." wrapText="true" styleClass="agent-help"/>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+        <Tab text="Status">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                <VBox spacing="12" styleClass="agent-content">
+                    <Label text="Vorhandenen Auftrag öffnen" styleClass="agent-section"/>
+                    <Label text="Nach erneutem Verbinden Projekt auswählen und Auftrags-ID eingeben. Ein Auftrag wird erst nach bewusstem Klick wieder aufgenommen." wrapText="true" styleClass="agent-help"/>
+                    <HBox spacing="8">
+                        <TextField fx:id="reopenId" promptText="Auftrags-ID" HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="reopenButton" text="Öffnen" onAction="#reopen"/>
+                    </HBox>
+                    <Label text="Aktuelle Auftrags-ID" styleClass="agent-section"/>
+                    <TextField fx:id="displayedJobId" editable="false" promptText="Noch kein Auftrag"/>
+                    <Label fx:id="budgetLabel" text="Budgetdaten erscheinen nach dem Start." wrapText="true"/>
+                    <ProgressBar fx:id="budgetProgress" progress="0" maxWidth="Infinity"/>
+                    <FlowPane hgap="8" vgap="8">
+                        <Button fx:id="refreshStatusButton" text="Status laden" onAction="#refreshStatus"/>
+                        <Button fx:id="cancelButton" text="Auftrag abbrechen" onAction="#cancel"/>
+                        <Button fx:id="resumeButton" text="Wiederaufnehmen" onAction="#resume"/>
+                        <Button fx:id="reviewButton" text="Prüfstand laden" onAction="#loadReview" styleClass="agent-primary"/>
+                    </FlowPane>
+                    <Label text="Belegte Prüfstufen" styleClass="agent-section"/>
+                    <TextArea fx:id="stageOverview" editable="false" wrapText="true" prefRowCount="10"
+                              text="Noch keine Stufenübersicht geladen."/>
+                    <Label text="Nicht ausgeführt bedeutet nicht fehlgeschlagen. Ein erzeugtes Diagramm und ein gültiger Vorschlag belegen noch keine korrekte Aufgabenlösung. Die Aufgabenprüfung gilt nur für das festgelegte Profil; eine Übernahme benötigt weiterhin Ihre Freigabe." wrapText="true" styleClass="agent-help"/>
+                    <TitledPane text="Hashbelege der Prüfstufen" expanded="false" animated="false">
+                        <TextArea fx:id="stageEvidence" editable="false" wrapText="true" prefRowCount="6" text="Keine Diagnosebelege geladen."/>
+                    </TitledPane>
+                    <Label text="Verbindung trennen schließt nur diese Ansicht. Ein bereits laufender Serverauftrag arbeitet weiter. „Auftrag abbrechen“ fordert seinen Abbruch an." wrapText="true" styleClass="agent-help"/>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+        <Tab text="Prüfung">
+            <VBox spacing="8" styleClass="agent-content">
+                <Label fx:id="reviewIdentity" text="Noch kein Prüfstand geladen." wrapText="true" styleClass="agent-help"/>
+                <TabPane fx:id="reviewSections" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+                    <Tab text="Gesamtdiff"><TextArea fx:id="diffText" editable="false" wrapText="false" styleClass="agent-code" promptText="Der vollständige Diff erscheint nach „Prüfstand laden“."/></Tab>
+                    <Tab text="Tests"><TextArea fx:id="checkText" editable="false" wrapText="true"/></Tab>
+                    <Tab text="Dateien und Hinweise"><TextArea fx:id="operationText" editable="false" wrapText="true"/></Tab>
+                    <Tab text="Diagramme">
+                        <VBox spacing="8">
+                            <HBox spacing="8">
+                                <ComboBox fx:id="diagramCombo" maxWidth="Infinity" HBox.hgrow="ALWAYS" promptText="Diagramm auswählen"/>
+                                <Button fx:id="diagramButton" text="Bild laden" onAction="#loadDiagram"/>
+                            </HBox>
+                            <Label fx:id="diagramStatus" text="Noch kein Diagramm geladen." wrapText="true" styleClass="agent-help"/>
+                            <ScrollPane fitToWidth="false" fitToHeight="false" pannable="true" VBox.vgrow="ALWAYS">
+                                <ImageView fx:id="diagramImage" preserveRatio="true" smooth="true"/>
+                            </ScrollPane>
+                        </VBox>
+                    </Tab>
+                </TabPane>
+            </VBox>
+        </Tab>
+        <Tab text="Übernahme">
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER">
+                <VBox spacing="12" styleClass="agent-content">
+                    <Label text="Geprüfte Änderungen übernehmen" styleClass="agent-section"/>
+                    <Label text="Die Übernahme benötigt einen gesonderten Operatorzugang. Sie gilt ausschließlich für den geladenen Prüfstand und verändert die freigegebenen Projektdateien." wrapText="true" styleClass="agent-help"/>
+                    <Label fx:id="confirmationHint" text="Übernahme erst nach dem Laden und Prüfen eines aktuellen Ergebnisses." wrapText="true"/>
+                    <VBox fx:id="adoptionBox" spacing="10">
+                        <CheckBox fx:id="reviewedCheck" text="Ich habe Gesamtdiff, Tests und erforderliche Diagramme geprüft." wrapText="true"/>
+                        <TextField fx:id="operatorName" promptText="Name der prüfenden Person"/>
+                        <PasswordField fx:id="operatorToken" promptText="Operator-Zugangstoken · bleibt nur im Speicher"/>
+                        <TextField fx:id="confirmationInput" promptText="Freigabetext für genau diesen Prüfstand"/>
+                        <Button fx:id="applyButton" text="Geprüfte Änderungen übernehmen …" onAction="#apply" styleClass="agent-primary"/>
+                    </VBox>
+                </VBox>
+            </ScrollPane>
+        </Tab>
+        <Tab text="Warteliste"><fx:include fx:id="queuePane" source="agent_queue.fxml"/></Tab>
+    </TabPane>
+</VBox>

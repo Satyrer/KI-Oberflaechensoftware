@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<ScrollPane xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.AgentQueueController" fitToWidth="true" hbarPolicy="NEVER">
+    <VBox spacing="12" styleClass="agent-content">
+        <Label text="Aufgabenwarteliste" styleClass="agent-section"/>
+        <Label text="Im Tab Auftrag eine Aufgabe vorbereiten und zur Warteliste hinzufügen. Neue Wartelisten sind pausiert. „Fortsetzen“ arbeitet sie nacheinander ab; „Eine Aufgabe starten“ gibt nur den nächsten Auftrag frei." wrapText="true" styleClass="agent-help"/>
+        <Label fx:id="queueSummary" text="Warteliste nach dem Verbinden verfügbar." wrapText="true"/>
+        <Label fx:id="queueError" text="" wrapText="true"/>
+        <FlowPane hgap="8" vgap="8">
+            <Button fx:id="queueRefreshButton" text="Aktualisieren" onAction="#refresh"/>
+            <Button fx:id="queuePauseButton" text="Pausieren" onAction="#pause"/>
+            <Button fx:id="queueResumeButton" text="Fortsetzen" onAction="#resume"/>
+            <Button fx:id="queueNextButton" text="Eine Aufgabe starten" onAction="#startNext"/>
+        </FlowPane>
+        <ListView fx:id="queueItems" prefHeight="190" styleClass="remote-chat-list"/>
+        <FlowPane hgap="8" vgap="8">
+            <Button fx:id="queueRemoveButton" text="Wartende Auswahl entfernen" onAction="#remove"/>
+            <Button fx:id="queueClearButton" text="Alle Wartenden entfernen" onAction="#clear"/>
+            <Button fx:id="queueOpenButton" text="Auftragsstatus öffnen" onAction="#open"/>
+        </FlowPane>
+        <TextArea fx:id="queueDetails" editable="false" wrapText="true" prefRowCount="6" promptText="Aufgabe auswählen, um Kennung und Details zu sehen."/>
+        <Label fx:id="queueMessage" text="" wrapText="true"/>
+        <Button fx:id="queueRetryButton" text="Aktion erneut anfragen" onAction="#retry"/>
+        <Label text="Pausieren hält weitere Freigaben an. Ein laufender Auftrag arbeitet weiter; sein Abbruch erfolgt gesondert im Tab Status. Entfernen und Leeren betreffen ausschließlich wartende Aufgaben. Ergebnisse und Belege bleiben über die Auftrags-ID zugänglich. Die Anzeige fragt bei offenen Aufgaben alle 10 Sekunden ohne Modellaufruf nach." wrapText="true" styleClass="agent-help"/>
+    </VBox>
+</ScrollPane>
