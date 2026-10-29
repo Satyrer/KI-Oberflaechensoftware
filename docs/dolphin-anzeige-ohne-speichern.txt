@@ -1,0 +1,93 @@
+Dolphin im Textworkflow und Chat: Anzeige ohne Speicherung
+Stand: 28. Oktober 2026
+
+Bedienung
+---------
+Im Modellfeld von Story oder Chat kann Dolphin 3 8B ausgewaehlt werden, sobald
+der Modellkatalog dieses Modell als verfuegbar meldet. Bei dieser Auswahl ist
+"Nur anzeigen - nicht im Projekt speichern" standardmaessig aktiviert.
+
+Der Ausfuehren-/Senden-Knopf oeffnet dann einen eigenen, leeren Dialog.
+Das Hauptfenster bleibt waehrend eines laufenden Auftrags bedienbar, damit die
+Queue aufgerufen werden kann.
+Alternativ ist der Knopf "Dolphin - leere Anzeige ohne Speicherung oeffnen"
+direkt verfuegbar. Bestehende Eingaben, Chats, Projektdateien und Zwischenstaende
+werden nicht in diesen Dialog uebernommen. Benoetigten Kontext dort selbst
+eingeben. Der Dialog nimmt nur einen vollstaendigen Auftrag innerhalb seiner
+angezeigten Groessenbegrenzung an; zu lange Eingaben werden nicht abgeschnitten.
+
+Ein- und Ausgabe werden in diesem Dialog angezeigt und bei "Ansicht leeren"
+oder beim Schliessen aus den sichtbaren Feldern entfernt. Der Dialog erzeugt
+keine Projektdateien, Chat-Historie, Zwischenstaende, automatischen Exporte oder
+Aktivitaetseintraege mit den Inhalten. Er verwendet einen eigenen direkten
+Gateway-Endpunkt und wechselt bei Fehlern niemals in den normalen Workflow.
+Eine Antwort wird erst nach Bestaetigung des ausgewaehlten Modells, der
+Speicheroption und der Modellfreigabe angezeigt.
+
+Bei aktivem Auftrag kann der Dialog geschlossen werden. Der Client bricht sein
+Warten ab. Ein bereits laufender Serverauftrag kann noch bis zum Abschluss oder
+seinem Zeitlimit weiterlaufen und seine Freigabe durchfuehren.
+
+Wer das Kontrollkaestchen deaktiviert, verwendet den normalen, ausdruecklich
+mit "Mit Speicherung" beschrifteten Workflow. Dort gelten die bestehenden
+Speicherfunktionen fuer Chat bzw. Projekt-Zwischenstaende. Die Speicheroption
+loescht keine vorher gespeicherten Inhalte und gilt nur fuer den eigenen Dialog.
+
+Grenzen
+-------
+Die Zusage betrifft das Speichern der Inhalte durch diese Anwendungsstrecke.
+Sie ist keine Zusage sicherer RAM-Loeschung. Betriebssystem-Auslagerung,
+Absturzabbilder, eigene Kopien und Bildschirmfotos sind nicht davon erfasst.
+Eine Speicheroption ist auch keine rechtliche Freistellung fuer Betreiber oder
+Anwender. Modellwahl und Speicherverhalten aendern keine gesetzlichen Pflichten.
+
+Queue-Anzeige
+-------------
+Im bestehenden Tab Queue / Server-Queue erscheinen private Dolphin-Auftraege als
+"Auftrag N" mit Kontext "Dolphinlauf" und den gewohnten Statusnamen und Farben.
+Auch die Detailauswahl enthaelt nur Auftragsnummer, diesen festen Kontext und
+Status. Eingaben, Antworten, Zusammenfassungen und Inhalts-Hashes werden weder
+abgefragt noch dort angezeigt. Beendete Eintraege stehen unter "Verlauf anzeigen".
+
+Die Spalte "Nr." verwendet einen gemeinsamen Zaehler fuer lokale, gemeldete
+Server- und private Dolphin-Auftraege. Er vergibt Anzeigeverweise fuer die
+laufende Anwendungssitzung; dies sind keine dauerhaften Backend-Ticketnummern.
+Lokale Auftraege erhalten die Nummer bei Registrierung, Serverauftraege bei der
+ersten Beobachtung. Wiederholtes Laden, Ausblenden oder neue Queue-Ansichten
+aendern eine bereits vergebene Nummer nicht. Ein Neustart der Oberflaeche setzt
+diesen ausschliesslich im Arbeitsspeicher gehaltenen Zaehler zurueck.
+
+Die Queue fragt bei sichtbarer Ansicht alle fuenf Sekunden den gesonderten
+Metadaten-Endpunkt /api/ephemeral-runs mit demselben Zugang ab. Die Metadaten
+werden nicht in Dateien geschrieben. Der Server haelt hoechstens 100 Eintraege
+und entfernt beendete Eintraege nach 24 Stunden; ein Serverneustart leert diesen
+Verlauf. Bei einem Lesefehler wird der letzte bekannte Stand als veraltet
+gekennzeichnet. Eine bestaetigte leere Antwort entfernt die alten Eintraege.
+Die vollstaendige Statusantwort ist auf 64 KiB und zehn Sekunden begrenzt;
+auch eine nach den HTTP-Headern haengende Verbindung blockiert die Queue nicht
+dauerhaft.
+
+Lokale Konfiguration
+--------------------
+config/local.properties enthaelt nur den Endpunkt und den Pfad zur separaten
+Zugangsdatei, nicht den Zugriffsschluessel im Quellcode:
+
+  ki.ephemeral.endpoint=http://PRIVATE-VM-IP:11435/api/ephemeral-text
+  ki.ephemeral.tokenFile=C:/absoluter/Pfad/config/ephemeral-text.token
+
+Alternativ: KI_EPHEMERAL_ENDPOINT und KI_EPHEMERAL_TOKEN_FILE.
+Der Endpunkt muss localhost oder eine private lokale IP verwenden. Umleitungen
+und HTTP-Proxys werden nicht verwendet. Die Zugangsdatei ist mit config/*.token
+vom Versionsverlauf ausgeschlossen. Diese Route benoetigt den eigenen
+EPHEMERAL_TEXT_TOKEN_FILE-Schluessel des Gateways, keinen Administrator-Token.
+Tokeninhalte gehoeren weder in Quellcode noch in Tests, Bildschirmfotos oder Logs.
+
+Pruefung
+--------
+Build-KI.ps1 erstellt die Oberflaeche. tests/Run-EphemeralTests.ps1 prueft mit
+synthetischen Daten und isolierten temporaeren Verzeichnissen die direkte
+Anfrage, Antwortbestaetigungen, fehlende Umleitungen, leere Dialogfelder,
+Anzeige/Leeren, private Standardauswahl in Story und Chat sowie ausbleibende
+Inhaltsdateien und gespeicherte Chat-Aufrufe. Der laufende Benutzerprozess wird
+dabei nicht neu gestartet. Die normalen Modellwahl-/Story-/Budgetpruefungen
+stehen in tests/Run-ModelSelectionTests.ps1.

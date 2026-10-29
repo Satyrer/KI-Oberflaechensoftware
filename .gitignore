@@ -39,3 +39,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Dedicated local credentials (never commit content)
+config/*.token

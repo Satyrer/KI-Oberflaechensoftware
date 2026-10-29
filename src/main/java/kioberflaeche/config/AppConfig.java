@@ -53,7 +53,7 @@ public record AppConfig(
                 value("ki.provider", "KI_PROVIDER", properties, "ollama"),
                 value("ki.apiKey", "KI_API_KEY", properties, ""),
                 value("ki.model", "KI_MODEL", properties, DEFAULT_AI_MODEL),
-                intValue("ki.timeoutSeconds", "KI_TIMEOUT_SECONDS", properties, 300),
+                intValue("ki.timeoutSeconds", "KI_TIMEOUT_SECONDS", properties, 2760),
                 value("chat.directory", "KI_CHAT_DIRECTORY", properties, DEFAULT_CHAT_DIRECTORY),
                 n8nWebBaseUrl(properties),
                 value("n8n.web.email", "N8N_WEB_EMAIL", properties, ""),
@@ -108,10 +108,6 @@ public record AppConfig(
             candidates.add(Path.of(LOCAL_CONFIG_PATH));
             candidates.addAll(classLocationConfigCandidates());
 
-            String userHome = System.getProperty("user.home");
-            if (userHome != null && !userHome.isBlank()) {
-                candidates.add(Path.of(userHome, "IdeaProjects", "KI Oberflaechensoftware", "config", "local.properties"));
-            }
         }
 
         Set<Path> unique = new LinkedHashSet<>();
@@ -132,7 +128,7 @@ public record AppConfig(
                 candidates.add(current.resolve("config").resolve("local.properties"));
             }
         } catch (Exception ignored) {
-            // Relative and user-home candidates still cover normal local launches.
+            // The relative project candidate still covers normal local launches.
         }
         return candidates;
     }
@@ -179,6 +175,16 @@ public record AppConfig(
             value = value.substring(0, value.length() - 1);
         }
         return value;
+    }
+
+    /** Separate opt-in route. Only a credential file path is configured, never its contents. */
+    public static String ephemeralEndpoint() {
+        Properties properties=new Properties();loadClasspathProperties(properties);loadLocalProperties(properties);
+        return value("ki.ephemeral.endpoint","KI_EPHEMERAL_ENDPOINT",properties,"");
+    }
+    public static String ephemeralTokenFile() {
+        Properties properties=new Properties();loadClasspathProperties(properties);loadLocalProperties(properties);
+        return value("ki.ephemeral.tokenFile","KI_EPHEMERAL_TOKEN_FILE",properties,"");
     }
 
     private static String value(String propertyKey, String envKey, Properties properties, String defaultValue) {
