@@ -1,0 +1,226 @@
+MODELLWAHL IN DER JAVA-OBERFLAECHE — 16. OKTOBER 2026
+
+Aktiver Projektordner:
+C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware
+
+BEDIENUNG
+
+KI Chat:
+- Modell: Automatisch (nach Aufgabe) oder gezielt eine Modell-ID aus der
+  Serverliste waehlen. Namen und Verfuegbarkeit kommen vom laufenden System.
+- Aufgabe: automatisch erkennen, Gespraech, Programmierung / Fehlersuche oder
+  Guard-Untersuchung. Die Aufgabenwahl aendert keine vorhandenen Guard-Regeln.
+- Die Modellentscheidung mit Laufzeitmodell und Begruendung wird als eigener
+  Hinweis nach der Antwort angezeigt und im lokalen Chat gespeichert.
+- Drei abgeschlossene User-/Assistant-Paare werden als Gespraechskontext
+  uebergeben. Diagnose- und Modellhinweise werden nicht erneut als Prompt
+  gesendet. Die aktuelle Nachricht steht genau einmal in messages.
+
+Story bauen:
+- Die beiden bestehenden Aufgaben bleiben: Kontext aus Quellen aufbauen /
+  aktualisieren und Szene schreiben / fortsetzen.
+- Die Modellauswahl gilt fuer den gesamten gestarteten Auftrag. Bei manueller
+  Wahl muss jede ausgefuehrte Modellphase diese ID bestaetigen. Bei Automatik
+  kann der Server je Auswertung, Schreiben und Pruefung unterschiedlich waehlen.
+- Die tatsaechlichen Phasenentscheidungen stehen beim Ergebnis. Sie werden aus
+  der vollstaendigen gespeicherten Antwort gelesen und bleiben daher auch nach
+  Wiederaufnahme eines Zwischenstands sichtbar.
+- Quellen, Kontext, Original/Vorschlag, Konfliktpruefung, Sicherung und explizite
+  Uebernahme bleiben unveraendert. Eine Modellauswahl uebernimmt keine Dateien.
+
+Sound zu TXT:
+- Das Spracherkennungsmodell bleibt separat Whisper small oder large-v3.
+- Fuer strukturierte Ausgabe steht zusaetzlich die Auswahl des Textmodells
+  bereit. Dieses ordnet das Transkript; es ersetzt die Spracherkennung nicht.
+- Bei plain wird keine Textmodell-ID angefordert. Der Strukturierungswahlschalter
+  ist dann gesperrt. Das unveraenderte Originaltranskript bleibt erhalten.
+- Wird Strukturierung serverseitig vollstaendig ausgelassen, wird dies als
+  ausgelassen angezeigt. Es wird kein verwendetes Textmodell erfunden.
+- Die lokale Kommando-Ausfuehrung kann weiterhin plain-Transkripte erzeugen.
+  Strukturierte Ausgabe mit Textmodellwahl verlangt den Server-Workflow.
+
+VERFUEGBARKEIT UND SPEICHERUNG
+
+Liste laden aktualisiert nur den Katalog; dabei werden keine Modellgewichte in
+den Arbeitsspeicher geladen. Auch die Auswahl startet noch keine Modellaufgabe.
+Nicht installierte oder fuer die Aufgabe ungeeignete Modelle werden nicht als
+einsatzbereit behandelt. Bei expliziter Wahl muss der Server das verwendete
+Modell bestaetigen; eine fehlende/abweichende Bestaetigung verhindert die
+Uebernahme einer behaupteten Modellantwort. Es gibt keinen stillen Wechsel.
+
+Ein fehlgeschlagener Katalogabruf bleibt sichtbar bis zum erfolgreichen
+Aktualisieren. Bei veralteter Liste sind manuelle Auftraege gesperrt. Die
+automatische Wahl bleibt moeglich und wird vom Server zur Laufzeit entschieden;
+ein nicht erreichbarer Server liefert dabei einen sichtbaren Auftragsfehler.
+
+Die Auswahl wird in config/model-preferences.properties gespeichert:
+- Chat: Modell und Aufgabenart.
+- Transkription: Textmodell fuer strukturierte Ausgabe.
+- Story: eigene Modellwahl je Projekt, adressiert ueber den Hash seines absoluten
+  Pfads. Ein spaeterer Umzug eines einzelnen Storyprojekts erzeugt einen neuen
+  Einstellungsschluessel. Quellen enthalten keine Modellauswahl.
+Die anfaengliche Auswahl ist Automatisch. Eine gespeicherte explizite ID bleibt
+beim Neustart erhalten, auch wenn sie gerade nicht verfuegbar ist. Erst die
+bewusste Auswahl eines anderen Modells oder Auto ersetzt sie. Beim Wechsel
+zwischen Storyprojekten wird jeweils deren eigene Wahl wiederhergestellt.
+
+TECHNISCHER VERTRAG
+
+GET /webhook/schreib-ai/models:
+  models: [{id,label,available,tasks,reason?}], defaultSelection: "auto".
+  Die Oberflaeche erfindet keine Ollama-Tags und laedt keine Modelle selbst.
+
+Requests:
+  modelSelection: "auto" oder opaque Katalog-ID.
+  Chat zusaetzlich task: auto/chat/coding/guard_test.
+  n8n-Chat history enthaelt nur abgeschlossene Paare; messages dieselben Paare
+  plus aktuelle Usernachricht. chatInput/message bleiben fuer den Workflow.
+  Story liefert weiter documents und contextDocuments vollstaendig getrennt.
+  Strukturierung sendet modelSelection als Multipart-Feld nur fuer structured.
+
+Antworten:
+  modelRouting: {requested,selected,model,task,mode,reason}.
+  Story ausserdem analysis.calls[].modelRouting, Strukturierung ai.modelRouting.
+  Manuelle Wahl prueft selected, die Anzeige nennt model und reason.
+  Bei alter automatischer Antwort ohne Metadaten wird das Modell ausdruecklich
+  als vom Server unbestaetigt angezeigt.
+
+BEHOBENE BEGLEITFEHLER
+
+1. Der Chat hatte die gerade hinzugefuegte Usernachricht bereits im Verlauf und
+   der Direktclient haengte sie nochmals an. Verlauf wird nun vor Hinzufuegen
+   eingefroren und auf echte abgeschlossene Austauschpaare begrenzt.
+2. Der bisherige Direktclient konnte aus Ollamas geschachtelter message-Struktur
+   versehentlich role statt content extrahieren. Antworten werden jetzt als JSON
+   strukturell gelesen; Steuerzeichen werden beim Schreiben gueltig escaped.
+3. Ein Chatwechsel waehrend der Antwort konnte Bedienelemente gesperrt lassen.
+   Abschluss/Fehler gibt den globalen Sendezustand jetzt unabhaengig davon frei.
+4. Katalogfehler duerfen nicht durch Aufgabenwechsel mit alter positiver
+   Begruendung ueberdeckt werden. Der Fehlerstatus bleibt erhalten.
+5. Aktualisierung und Aufgabenwechsel duerfen keine ausdrueckliche Modellauswahl
+   auf Auto zuruecksetzen. Unverfuegbare Auswahl bleibt sichtbar und wird gesperrt.
+6. Echter Kompatibilitaetsfund: Der erste Java-Katalogabruf lief trotz freigegebenem
+   VM-Netzzugriff nach 20 Sekunden ins Timeout, waehrend die PowerShell-Gegenprobe
+   HTTP 200 in 0,22 Sekunden lieferte (zusaetzliche Root-Gegenprobe: 0,147 Sekunden).
+   Der neue Katalogclient verwendete zuvor die Java-HTTP-Standardaushandlung.
+   Nach explizitem HTTP/1.1, wie es die bestehenden n8n-/Storyclients bereits
+   verwenden, bestand der echte Katalogabruf einschliesslich JavaFX-Modellwahl.
+   Auch der direkte Chatclient nutzt nun konsistent HTTP/1.1. Dies war ein
+   Verbindungsproblem des konkreten Abrufs, kein Nachweis einer langsamen KI.
+
+START UND WIEDERHOLBARE PRUEFUNG
+
+In IntelliJ weiterhin die Konfiguration KI Chat starten verwenden. Geprueft:
+Hauptklasse kioberflaeche.Main, Arbeitsverzeichnis $PROJECT_DIR$, Make aktiviert,
+Projekt-Java 21. Kein Verweis auf den frueheren IdeaProjects-Stand.
+
+Build-KI.ps1 erstellt offline das Maven-JAR und target/desktop mit genau den
+JavaFX-21-Windows-Laufzeitbibliotheken. Start-KI.ps1 startet dieses Desktop-Paket
+mit dem aktiven Projekt als Arbeitsverzeichnis; -CheckOnly prueft den Starter
+ohne eine neue Anwendung zu oeffnen. JavaDirectory/MavenDirectory koennen als
+Parameter auf vorhandene Installationen gesetzt werden. Eine bereits laufende
+Anwendung erhaelt Quellaenderungen erst nach ihrem normalen Neustart.
+
+tests/Run-ModelSelectionTests.ps1 testet das gebaute Desktop-JAR, nicht nur lose
+Klassen. Testordner und Loopback-Testserver sind isoliert; vorhandene Storys,
+Chats und Transkriptdateien werden nicht als Testdaten verwendet oder geaendert.
+46 neue Pruefungen sind bestanden: Katalog, Modelle/Aufgaben, strikte manuelle
+Zuordnung, automatische Phasenanzeige, Verlauf, JSON-Steuerzeichen, echte lokale
+HTTP-Aufrufe fuer beide Chatclients/Story/Strukturierung, Ausgabeschutz,
+JavaFX-Auswahl/Refresh/Sperren, Neustart und Projektwechsel, kompletter FXML-Lauf
+und tatsaechlicher Chat-Senden-Knopf. Auch fachliche Fehler in einer faelschlich
+mit HTTP 200 gelieferten Chatantwort werden als Fehler statt als KI-Antwort
+behandelt. Zusaetzlich bestand die vollstaendige
+vorhandene Story-Regression mit Review/Journals/Konflikten/Wiederaufnahme.
+Screenshots mit 1280 und 920 Pixeln wurden im Nachweisordner erstellt.
+
+Zusaetzlich wurde das fertige Desktop-JAR gegen die echte VM-Modellliste geprueft:
+Mistral-RAG und NeMo waren installiert und auswaehlbar, DeepSeek wurde waehrend
+des noch laufenden Downloads ehrlich als nicht verfuegbar angezeigt und sein
+manueller Start gesperrt. Dieser UI-Livetest rief ausschliesslich den Katalog ab;
+er startete keine Modellgenerierung. Nachweis: java-live-catalog.json/.log und
+models-live-catalog.png. Die 46 lokalen Pruefungen und die Story-Regression wurden
+nach der HTTP/1.1-Korrektur nochmals am finalen Desktop-JAR erfolgreich ausgefuehrt.
+
+Nach abgeschlossenem Download und dem Fristen-Nachtrag bestand am 16. Oktober
+2026 um 14:06:37 Uhr erneut der abschliessende Test mit
+tests/Check-LiveModelCatalog.ps1 -RequireAllInstalled am finalen Desktop-JAR:
+Mistral-RAG, Mistral NeMo 12B und DeepSeek R1 0528 Qwen3 8B Q8_0 wurden vom echten
+VM-Katalog jeweils als installiert gemeldet. Jede der drei IDs wurde einzeln
+im echten JavaFX-Picker des fertigen Desktop-JARs ausgewaehlt und als gueltige
+manuelle Auswahl bestaetigt. DeepSeek ist damit installiert und gezielt waehlbar.
+Nachweise: java-live-catalog-all-installed.json/.log und
+models-live-catalog-all-installed.png. Auch dieser Test startete keine Generierung
+und verwendete keine Nutzerdateien oder privaten Einstellungen. Er lief waehrend
+eines getrennten DeepSeek-Adaptertests, ohne selbst einen Modellauftrag zu senden.
+Gepruefter JAR-SHA256:
+0096f2dbb6f85f0e014b784169325aa4b4755c45ef35bd97904ea1a503be1d25.
+
+Die Katalogangabe available bestaetigt die Installation und Aufgabenzuordnung;
+sie ist kein bestandener Inferenz- oder Qualitaetstest. Der gesondert freigegebene
+Speicherfix wurde inzwischen verifiziert; auch ein normaler VM-Neustart bestand.
+Im getrennten DeepSeek-Laufzeittest bestand ein direkter JSON-Auftrag mit Thinking
+in 112,272 Sekunden. Die fachliche Review-Probe bleibt gemischt: Ein korrekter
+Positivfall wurde wegen eines erfundenen Ueberschriftenverbots faelschlich
+beanstandet; im Negativfall wurde die konkrete Verwechslung rechts statt links
+in 107,349 Sekunden erkannt. Daraus folgt kein allgemeiner Qualitaetsnachweis.
+Die Oberflaechenpruefung selbst bleibt ausschliesslich ein Katalog-/Auswahltest;
+ausfuehrliche Laufzeit- und Qualitaetsnachweise stehen im gemeinsamen Abschlussbericht.
+
+Diese lokalen Vertragspruefungen bestaetigen keine Modellqualitaet und ersetzen
+keine VM-Livetests. Installation, Ressourcen und echte Modellergebnisse stehen
+im gemeinsamen Abschlussbericht zur DeepSeek-Integration.
+
+NACHTRAG: FRISTEN FUER CPU-REASONING, 16. OKTOBER 2026
+
+Nach Freigabe des getrennt getesteten DeepSeek-Reasoningprofils wurden die
+tatsaechlichen aeusseren HTTP-Fristen angepasst. Das Gateway kann pro Modellaufruf
+bis zu 1800 Sekunden Modellzeit, 120 Sekunden Warteschlange und optional
+120 Sekunden Guard-Aufruf benoetigen. Der Worker-/Workflow-Aufruf darf dafuer
+2100 Sekunden warten. Ein Chat kann davor bis zu 455 Sekunden fuer Routensuche,
+Qdrant, Embedding inklusive vorhandenem Fehler-Fallback und Suche benoetigen.
+n8n wartet fuer diesen Chat insgesamt 2700 Sekunden.
+
+Die Java-Oberflaeche verwendet deshalb folgende Mindest-Gesamtfristen:
+- Chat direkt oder ueber n8n: 2760 Sekunden (46 Minuten).
+- Story-Kontext und Szenen: unveraendert 43500 Sekunden (12 Stunden + 5 Minuten),
+  also weiter ueber dem n8n-Gesamtbudget von 12 Stunden + 2 Minuten.
+- ASR plain, small und large-v3: 43500 Sekunden (12 Stunden + 5 Minuten).
+- ASR structured, small und large-v3: 45600 Sekunden (12 Stunden + 40 Minuten).
+  Das deckt den erlaubten 12-Stunden-Whisper-Aufruf plus 2100 Sekunden
+  Textstrukturierung und 300 Sekunden Rueckgabe-/Workflowreserve ab.
+
+Beide Whisper-Modelle nutzen denselben 12-Stunden-Aufruf im n8n-Workflow.
+Deshalb waere eine kuerzere Annahme fuer small kein verlaessliches Gesamtbudget.
+Die bisherigen 240/300-Sekunden-Einstellungen konnten gueltige Auftraege vorzeitig
+abbrechen. Bereits vorhandene private Einstellungen wurden nicht veraendert:
+die Aufrufstellen wenden die Mindestfristen an, groessere konfigurierte
+Gesamtfristen bleiben wirksam. Verbindungsaufbau und reine Katalog-/Dateiabfragen
+erhalten dadurch keine lange Reasoning-Frist. Eine Frist ist eine Obergrenze,
+keine Aussage ueber die erwartete Laufdauer oder Ergebnisqualitaet.
+
+Das neue Desktop-Paket umfasst 31 Javaquellen. 39 zusaetzliche Tests pruefen
+die tatsaechlich erzeugten HttpRequest-Fristen der Chat-, Story- und ASR-Clients
+mit einem isolierten Testtransport. Sie pruefen beide ASR-Modelle, plain und
+structured, kleinere und groessere Konfigurationen sowie unveraenderte kurze
+Projektmetadaten-Aufrufe. Kein Test wartet diese Fristen ab oder startet ein
+Modell. Zusaetzlich bestanden erneut alle 46 Modellwahlpruefungen und die
+vollstaendige Story-Regression am neu gebauten Desktop-JAR.
+Nachweise: desktop-reasoning-budget-tests/ und java-package-reasoning-budget-build.log.
+Der unmittelbar vorherige JAR-Stand ist als desktop-jar-before-reasoning-timeout.jar
+erhalten. Die neue Gesamtliste und aktuellen Artefakthashes stehen in
+UI-DATEINACHWEIS.json und UI-DESKTOP-ARTEFAKTE.json.
+
+NACHWEISE UND RUECKFALL
+
+C:\KI Arbeitsbereich\Aenderungen-2026-10-16-DeepSeek-Modellwahl:
+java-before.zip: Vorherstand der Javaquellen/Ressourcen/Dokumentation ohne
+private lokale Konfiguration oder Chats.
+desktop-jar-before.jar: bisheriges Maven-Artefakt.
+java-package-build.log: Maven-Paket und Desktop-Bundle.
+desktop-package-tests/: letzte Tests direkt gegen das Desktop-JAR und Bilder.
+UI-DATEINACHWEIS.json und UI-MODELLWAHL.patch: Aenderungen dieses Auftrags.
+
+Rueckfall gezielt anhand dieser Dateiliste durchfuehren; nicht pauschal ueber
+neuere eigene Aenderungen kopieren. Bestehende private Konfiguration, Chats,
+Arbeitsprojekte und Transkripte sind kein Bestandteil des Rueckfallpakets.

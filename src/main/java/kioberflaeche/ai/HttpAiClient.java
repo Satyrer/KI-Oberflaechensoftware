@@ -1,6 +1,7 @@
 package kioberflaeche.ai;
 
 import kioberflaeche.model.ChatMessage;
+import kioberflaeche.util.SimpleJson;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,23 +23,30 @@ public class HttpAiClient implements AiClient {
     private final Duration timeout;
 
     public HttpAiClient(String endpoint, String apiKey, String model) {
-        this(endpoint, apiKey, model, 300);
+        this(endpoint, apiKey, model, (int) RequestBudgets.CHAT_SECONDS);
     }
 
     public HttpAiClient(String endpoint, String apiKey, String model, int timeoutSeconds) {
         this.client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         this.endpoint = URI.create(endpoint);
         this.apiKey = apiKey == null ? "" : apiKey;
         this.model = model == null ? "" : model;
-        this.timeout = Duration.ofSeconds(Math.max(1, timeoutSeconds));
+        this.timeout = RequestBudgets.chat(timeoutSeconds);
     }
 
     @Override
     public CompletableFuture<String> ask(String sessionId, List<ChatMessage> history, String userMessage) {
-        String payload = buildPayload(history, userMessage);
+        return askWithModel(sessionId,history,userMessage,"auto","auto").thenApply(Reply::text);
+    }
+
+    @Override
+    public CompletableFuture<Reply> askWithModel(String sessionId, List<ChatMessage> history, String userMessage, String modelSelection, String task) {
+        String payload = buildPayload(AiClient.recentHistory(history), userMessage, modelSelection, task);
         HttpRequest.Builder builder = HttpRequest.newBuilder(endpoint)
+                .version(HttpClient.Version.HTTP_1_1)
                 .timeout(timeout)
                 .header("Content-Type", "application/json; charset=utf-8")
                 .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8));
@@ -53,8 +61,9 @@ public class HttpAiClient implements AiClient {
                         throw new AiRequestException("KI-Anfrage fehlgeschlagen: HTTP "
                                 + response.statusCode() + " - " + response.body());
                     }
-                    return extractAnswer(response.body())
-                            .orElseThrow(() -> new AiRequestException("KI-Antwort konnte nicht gelesen werden: " + response.body()));
+                    try { ModelRouting.verify(response.body(),modelSelection); } catch(IOException error) { throw new AiRequestException(error); }
+                    String text=extractAnswer(response.body()).orElseThrow(() -> new AiRequestException("KI-Antwort konnte nicht gelesen werden."));
+                    return new Reply(text, ModelRouting.summary(response.body()));
                 })
                 .exceptionally(error -> {
                     Throwable cause = unwrap(error);
@@ -74,9 +83,11 @@ public class HttpAiClient implements AiClient {
         return current;
     }
 
-    private String buildPayload(List<ChatMessage> history, String userMessage) {
+    private String buildPayload(List<ChatMessage> history, String userMessage, String modelSelection, String task) {
         StringBuilder json = new StringBuilder();
         json.append('{');
+        json.append("\"modelSelection\":\"").append(escape(ModelRouting.normalize(modelSelection))).append("\",");
+        json.append("\"task\":\"").append(escape(ModelRouting.normalize(task))).append("\",");
         if (!model.isBlank()) {
             json.append("\"model\":\"").append(escape(model)).append("\",");
         }
@@ -102,71 +113,18 @@ public class HttpAiClient implements AiClient {
     }
 
     private Optional<String> extractAnswer(String body) {
-        return firstJsonStringValue(body, "response")
-                .or(() -> firstJsonStringValue(body, "answer"))
-                .or(() -> firstJsonStringValue(body, "content"))
-                .or(() -> firstJsonStringValue(body, "message"))
-                .or(() -> firstOpenAiChoiceContent(body))
-                .or(() -> body.isBlank() ? Optional.empty() : Optional.of(body.trim()));
+        try { return extractJson(SimpleJson.parse(body)); }
+        catch(RuntimeException error) { return body.isBlank()?Optional.empty():Optional.of(body.strip()); }
     }
-
-    private Optional<String> firstOpenAiChoiceContent(String body) {
-        int choicesIndex = body.indexOf("\"choices\"");
-        if (choicesIndex < 0) {
-            return Optional.empty();
-        }
-        int contentIndex = body.indexOf("\"content\"", choicesIndex);
-        if (contentIndex < 0) {
-            return Optional.empty();
-        }
-        return stringValueAfterColon(body, contentIndex + "\"content\"".length());
-    }
-
-    private Optional<String> firstJsonStringValue(String body, String key) {
-        int keyIndex = body.indexOf("\"" + key + "\"");
-        if (keyIndex < 0) {
-            return Optional.empty();
-        }
-        return stringValueAfterColon(body, keyIndex + key.length() + 2);
-    }
-
-    private Optional<String> stringValueAfterColon(String body, int startIndex) {
-        int colonIndex = body.indexOf(':', startIndex);
-        if (colonIndex < 0) {
-            return Optional.empty();
-        }
-        int quoteIndex = body.indexOf('"', colonIndex + 1);
-        if (quoteIndex < 0) {
-            return Optional.empty();
-        }
-
-        StringBuilder value = new StringBuilder();
-        boolean escaped = false;
-        for (int i = quoteIndex + 1; i < body.length(); i++) {
-            char c = body.charAt(i);
-            if (escaped) {
-                value.append(unescape(c));
-                escaped = false;
-            } else if (c == '\\') {
-                escaped = true;
-            } else if (c == '"') {
-                return Optional.of(value.toString());
-            } else {
-                value.append(c);
-            }
+    private Optional<String> extractJson(Object value) {
+        if(value instanceof String text) return text.isBlank()?Optional.empty():Optional.of(text);
+        if(value instanceof List<?> list) return list.isEmpty()?Optional.empty():extractJson(list.get(0));
+        if(!(value instanceof java.util.Map<?,?>)) return Optional.empty();
+        var root=SimpleJson.asObject(value);
+        for(String key:List.of("response","answer","message","content","choices","output","text")) {
+            var found=extractJson(root.get(key)); if(found.isPresent()) return found;
         }
         return Optional.empty();
-    }
-
-    private char unescape(char c) {
-        return switch (c) {
-            case 'n' -> '\n';
-            case 'r' -> '\r';
-            case 't' -> '\t';
-            case '"' -> '"';
-            case '\\' -> '\\';
-            default -> c;
-        };
     }
 
     private String escape(String text) {
@@ -179,7 +137,7 @@ public class HttpAiClient implements AiClient {
                 case '\n' -> escaped.append("\\n");
                 case '\r' -> escaped.append("\\r");
                 case '\t' -> escaped.append("\\t");
-                default -> escaped.append(c);
+                default -> { if(c<32) escaped.append(String.format("\\u%04x",(int)c)); else escaped.append(c); }
             }
         }
         return escaped.toString();

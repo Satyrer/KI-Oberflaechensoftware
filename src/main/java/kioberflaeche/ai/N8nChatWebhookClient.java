@@ -28,7 +28,7 @@ public class N8nChatWebhookClient implements AiClient {
                 .build();
         this.endpoint = endpoint == null ? "" : endpoint;
         this.authorization = authorization == null ? "" : authorization;
-        this.timeout = Duration.ofSeconds(Math.max(1, timeoutSeconds));
+        this.timeout = RequestBudgets.chat(timeoutSeconds);
     }
 
     public String endpoint() {
@@ -37,6 +37,12 @@ public class N8nChatWebhookClient implements AiClient {
 
     @Override
     public CompletableFuture<String> ask(String sessionId, List<ChatMessage> history, String userMessage) {
+        return askWithModel(sessionId,history,userMessage,"auto","auto").thenApply(Reply::text);
+    }
+
+    @Override
+    public CompletableFuture<Reply> askWithModel(String sessionId, List<ChatMessage> history, String userMessage, String modelSelection, String task) {
+        history=AiClient.recentHistory(history);
         if (endpoint.isBlank()) {
             return CompletableFuture.failedFuture(new HttpAiClient.AiRequestException(
                     "n8n-Chat-Webhook-URL fehlt. Bitte Chat URL aus dem n8n Chat Trigger in config/local.properties setzen."
@@ -48,7 +54,7 @@ public class N8nChatWebhookClient implements AiClient {
                 .timeout(timeout)
                 .header("Content-Type", "application/json; charset=utf-8")
                 .header("Accept", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(buildPayload(sessionId, history, userMessage), StandardCharsets.UTF_8));
+                .POST(HttpRequest.BodyPublishers.ofString(buildPayload(sessionId, history, userMessage, modelSelection, task), StandardCharsets.UTF_8));
 
         if (!authorization.isBlank()) {
             builder.header("Authorization", authorization);
@@ -60,8 +66,9 @@ public class N8nChatWebhookClient implements AiClient {
                         throw new HttpAiClient.AiRequestException("n8n-Chat-Anfrage fehlgeschlagen: HTTP "
                                 + response.statusCode() + " - " + response.body());
                     }
-                    return extractAnswer(response.body())
-                            .orElseThrow(() -> new HttpAiClient.AiRequestException("n8n-Antwort konnte nicht gelesen werden: " + response.body()));
+                    try { ModelRouting.verify(response.body(),modelSelection); } catch(java.io.IOException error) { throw new HttpAiClient.AiRequestException(error); }
+                    String text=extractAnswer(response.body()).orElseThrow(() -> new HttpAiClient.AiRequestException("n8n-Antwort konnte nicht gelesen werden."));
+                    return new Reply(text,ModelRouting.summary(response.body()));
                 })
                 .exceptionally(error -> {
                     Throwable cause = unwrap(error);
@@ -73,9 +80,11 @@ public class N8nChatWebhookClient implements AiClient {
                 });
     }
 
-    private String buildPayload(String sessionId, List<ChatMessage> history, String userMessage) {
+    private String buildPayload(String sessionId, List<ChatMessage> history, String userMessage, String modelSelection, String task) {
         StringBuilder payload = new StringBuilder();
         payload.append('{');
+        payload.append("\"modelSelection\":\"").append(escape(ModelRouting.normalize(modelSelection))).append("\",");
+        payload.append("\"task\":\"").append(escape(ModelRouting.normalize(task))).append("\",");
         payload.append("\"action\":\"sendMessage\",");
         payload.append("\"sessionId\":\"").append(escape(sessionId)).append("\",");
         payload.append("\"chatInput\":\"").append(escape(userMessage)).append("\",");
@@ -92,6 +101,14 @@ public class N8nChatWebhookClient implements AiClient {
                     .append('}');
         }
         payload.append(']');
+        payload.append(",\"messages\":[");
+        for(int i=0;i<history.size();i++) {
+            if(i>0) payload.append(',');
+            var message=history.get(i);
+            payload.append("{\"role\":\"").append(message.sender().apiRole()).append("\",\"content\":\"").append(escape(message.text())).append("\"}");
+        }
+        if(!history.isEmpty()) payload.append(',');
+        payload.append("{\"role\":\"user\",\"content\":\"").append(escape(userMessage)).append("\"}]");
         payload.append('}');
         return payload.toString();
     }
@@ -152,7 +169,7 @@ public class N8nChatWebhookClient implements AiClient {
                 case '\n' -> escaped.append("\\n");
                 case '\r' -> escaped.append("\\r");
                 case '\t' -> escaped.append("\\t");
-                default -> escaped.append(c);
+                default -> { if(c<32) escaped.append(String.format("\\u%04x",(int)c)); else escaped.append(c); }
             }
         }
         return escaped.toString();

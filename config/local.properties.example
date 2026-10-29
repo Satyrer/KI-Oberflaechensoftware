@@ -13,7 +13,8 @@ ki.path=/api/chat
 # Optional credentials and model selection for the local AI service.
 ki.apiKey=
 ki.model=mistral-rag:latest
-ki.timeoutSeconds=300
+# Chat minimum: 2760 s; a larger configured timeout remains effective.
+ki.timeoutSeconds=2760
 
 # Current local AI stack / n8n.
 n8n.host=192.168.178.41
@@ -46,14 +47,20 @@ media.ffmpeg.path=ffmpeg
 # If transcription.n8n.webhookUrl is set, the app sends multipart/form-data there with:
 # - file: binary audio file
 # - language: de/en/...
+# - asrModel: small (default) or large-v3, chosen in the transcription tab.
+# Both Whisper models use the complete server-workflow allowance:
+# plain: at least 12 h + 5 min; structured: at least 12 h + 40 min.
+# A longer n8n.schreibAi.timeoutSeconds remains effective; local private settings are not overwritten.
 transcription.n8n.webhookUrl=
 transcription.n8n.authorization=
 transcription.defaultLanguage=de
 
 # Optional local command template. Placeholders:
-# {input} {output} {outputDir} {language}
-# Example for whisper.cpp:
-# transcription.command=C:\\Tools\\whisper.cpp\\main.exe -m C:\\Models\\ggml-medium.bin -f "{input}" -otxt -of "{output}"
+# {input} {output} {outputDir} {language} {model}
+# The {model} placeholder is required for a custom command. Its launcher must map
+# small and large-v3 to the corresponding local model and use CPU execution.
+# Example for the Python Whisper CLI:
+# transcription.command=whisper "{input}" --model {model} --device cpu --fp16 False --output_format txt --output_dir "{outputDir}"
 transcription.command=
 
 # Local storage folders. These folders are ignored by Git.
