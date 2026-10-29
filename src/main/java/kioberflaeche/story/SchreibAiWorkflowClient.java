@@ -1,6 +1,7 @@
 package kioberflaeche.story;
 
 import kioberflaeche.util.SimpleJson;
+import kioberflaeche.ai.ModelRouting;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,10 +12,115 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
 import java.util.Map;
 
 public class SchreibAiWorkflowClient {
     public record StoryDocument(String path, String content) {
+    }
+
+    public record ProposedChange(String action, String path, String content) {}
+    public record Result(String raw, String summary, List<ProposedChange> changes, String warning) {}
+
+    public static final class WorkflowFailure extends IOException {
+        private final String response;
+        public WorkflowFailure(String message, String response) {
+            super(message);
+            this.response = response;
+        }
+        public String response() { return response; }
+    }
+
+    public Result buildContext(String projectId, String language, String instruction,
+                               List<StoryDocument> sources, List<StoryDocument> contextDocuments) throws IOException, InterruptedException {
+        return buildContext(projectId,language,instruction,sources,contextDocuments,"auto");
+    }
+
+    public Result buildContext(String projectId, String language, String instruction,
+                               List<StoryDocument> sources, List<StoryDocument> contextDocuments, String modelSelection) throws IOException, InterruptedException {
+        String payload = "{\"projectId\":\"" + escapeJson(projectId) + "\",\"outputLanguage\":\"" + escapeJson(language)
+                + "\",\"instruction\":\"" + escapeJson(instruction) + "\",\"documents\":" + documentsJson(sources)
+                + ",\"contextDocuments\":" + documentsJson(contextDocuments) + ",\"modelSelection\":\""+escapeJson(ModelRouting.normalize(modelSelection))+"\"}";
+        return verifiedResult(post("/webhook/schreib-ai/synthesize", payload), projectId, modelSelection);
+    }
+
+    public Result writeScene(String projectId, String language, String instruction, String target,
+                             List<StoryDocument> sources, List<StoryDocument> contextDocuments) throws IOException, InterruptedException {
+        return writeScene(projectId,language,instruction,target,sources,contextDocuments,"auto");
+    }
+
+    public Result writeScene(String projectId, String language, String instruction, String target,
+                             List<StoryDocument> sources, List<StoryDocument> contextDocuments, String modelSelection) throws IOException, InterruptedException {
+        String payload = "{\"projectId\":\"" + escapeJson(projectId) + "\",\"outputLanguage\":\"" + escapeJson(language)
+                + "\",\"prompt\":\"" + escapeJson(instruction) + "\",\"target\":\"" + escapeJson(target)
+                + "\",\"documents\":" + documentsJson(sources) + ",\"contextDocuments\":" + documentsJson(contextDocuments) + ",\"modelSelection\":\""+escapeJson(ModelRouting.normalize(modelSelection))+"\"}";
+        return verifiedResult(post("/webhook/schreib-ai/continue", payload), projectId, modelSelection);
+    }
+
+    private static Result verifiedResult(String raw,String projectId,String selection) throws WorkflowFailure {
+        Result result=parseResult(raw,projectId);
+        try { ModelRouting.verify(raw,selection); } catch(IOException error) { throw new WorkflowFailure(error.getMessage(),raw); }
+        return result;
+    }
+
+    public static Result parseResult(String body, String expectedProject) throws WorkflowFailure {
+        Map<String, Object> root;
+        try {
+            Object parsed = SimpleJson.parse(body);
+            if (!(parsed instanceof Map<?, ?>)) throw new IllegalArgumentException("not object");
+            root = SimpleJson.asObject(parsed);
+        } catch (RuntimeException error) {
+            throw new WorkflowFailure("Der Workflow hat kein lesbares Story-Ergebnis geliefert.", body);
+        }
+        String status = SimpleJson.asString(root.get("status"));
+        if (Boolean.FALSE.equals(root.get("ok")) || root.get("error") != null
+                || status.equals("error") || status.startsWith("blocked")) {
+            throw new WorkflowFailure(failureMessage(root), body);
+        }
+        String returnedProject = SimpleJson.asString(root.get("projectId"));
+        if (!returnedProject.isBlank() && !returnedProject.equals(expectedProject)) {
+            throw new WorkflowFailure("Die Workflow-Antwort gehoert zu einem anderen Projekt. Es wurde nichts uebernommen.", body);
+        }
+        if (!(root.get("file_changes") instanceof List<?> items)) {
+            throw new WorkflowFailure("Der Workflow hat keine pruefbare Liste von Dateivorschlaegen geliefert.", body);
+        }
+        List<ProposedChange> changes = new ArrayList<>();
+        Set<String> targets = new HashSet<>();
+        for (Object item : items) {
+            Map<String, Object> change = SimpleJson.asObject(item);
+            if (!(change.get("path") instanceof String path) || path.isBlank()
+                    || !(change.get("content") instanceof String content)) {
+                throw new WorkflowFailure("Ein Dateivorschlag hat keinen gueltigen Pfad oder Text. Die Antwort bleibt als Zwischenstand erhalten.", body);
+            }
+            String normalized = path.replace('\\', '/');
+            String key;
+            try { key = java.nio.file.Path.of(normalized).normalize().toString().toLowerCase(Locale.ROOT); }
+            catch (RuntimeException error) { throw new WorkflowFailure("Ein vorgeschlagener Dateipfad ist ungueltig.", body); }
+            if (!targets.add(key)) throw new WorkflowFailure("Die Antwort enthaelt mehrere Vorschlaege fuer dieselbe Datei; bitte den Auftrag genauer formulieren.", body);
+            String action = SimpleJson.asString(change.get("action"));
+            if (action.isBlank()) action = "upsert";
+            if (!Set.of("upsert", "write", "review", "create", "update", "replace").contains(action)) {
+                throw new WorkflowFailure("Nicht unterstuetzte Dateiaenderung: " + action + ". Es wurde nichts uebernommen.", body);
+            }
+            changes.add(new ProposedChange(action, normalized, content));
+        }
+        String summary = SimpleJson.asString(root.get("summary"));
+        if (summary.isBlank()) summary = changes.isEmpty() ? "Keine Dateiaenderungen vorgeschlagen." : changes.size() + " Dateivorschlaege zur Pruefung bereit.";
+        String warning = root.get("warning") instanceof String text ? text.strip() : "";
+        if (warning.isBlank() && (Boolean.TRUE.equals(root.get("degraded")) || Boolean.TRUE.equals(root.get("fallback")))) {
+            warning = "Der Workflow meldet ein eingeschraenktes Ergebnis. Details und Abdeckung bitte pruefen.";
+        }
+        if (warning.codePointCount(0,warning.length()) > 700) warning=warning.substring(0,warning.offsetByCodePoints(0,697))+"...";
+        return new Result(body, summary, List.copyOf(changes), warning);
+    }
+
+    private static String failureMessage(Map<String, Object> root) {
+        String message = SimpleJson.asString(root.get("message"));
+        if (message.isBlank()) message = SimpleJson.asString(SimpleJson.asObject(root.get("error")).get("message"));
+        if (message.isBlank()) message = "Der Workflow konnte den Auftrag nicht vollstaendig ausfuehren. Es wurde nichts uebernommen.";
+        return message.length() > 700 ? message.substring(0, 700) + "..." : message;
     }
 
     private final HttpClient client = HttpClient.newBuilder()
@@ -176,15 +282,19 @@ public class SchreibAiWorkflowClient {
         }
         HttpRequest request = HttpRequest.newBuilder(URI.create(baseUrl + path))
                 .version(HttpClient.Version.HTTP_1_1)
-                .timeout(requestTimeout)
+                .timeout(path.endsWith("/synthesize") || path.endsWith("/continue")
+                        ? requestTimeout.compareTo(Duration.ofHours(12).plusMinutes(5)) < 0 ? Duration.ofHours(12).plusMinutes(5) : requestTimeout
+                        : requestTimeout)
                 .header("Content-Type", "application/json; charset=utf-8")
                 .header("Accept", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Schreib-AI Workflow nicht erreichbar (" + baseUrl + path + "): HTTP "
-                    + response.statusCode() + "\n" + response.body());
+            String message = "Schreib-AI Auftrag fehlgeschlagen: HTTP " + response.statusCode();
+            try { message += " – " + failureMessage(SimpleJson.asObject(SimpleJson.parse(response.body()))); }
+            catch (RuntimeException ignored) { /* The raw response stays in the task evidence, not in the status. */ }
+            throw new WorkflowFailure(message, response.body());
         }
         return response.body();
     }
@@ -208,12 +318,8 @@ public class SchreibAiWorkflowClient {
     }
 
     private String escapeJson(String value) {
-        return (value == null ? "" : value)
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+        String encoded=StoryReviewStore.json(value==null?"":value);
+        return encoded.substring(1,encoded.length()-1);
     }
 
     private String documentsJson(List<StoryDocument> documents) {

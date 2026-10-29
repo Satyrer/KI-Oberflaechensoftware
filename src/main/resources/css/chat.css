@@ -112,6 +112,24 @@
     -fx-font-weight: bold;
 }
 
+.model-controls .combo-box,
+.model-controls .combo-box .list-cell {
+    -fx-background-color: #0f1117;
+    -fx-text-fill: #f8fafc;
+    -fx-background-radius: 7px;
+}
+
+.model-controls .combo-box {
+    -fx-border-color: #334155;
+    -fx-border-radius: 7px;
+}
+
+.model-controls .button {
+    -fx-background-color: #263041;
+    -fx-text-fill: #f8fafc;
+    -fx-background-radius: 7px;
+}
+
 .chat-status {
     -fx-text-fill: #93a4b8;
     -fx-font-size: 12px;
@@ -220,6 +238,52 @@
     -fx-font-family: "Segoe UI", "Arial";
 }
 
+.story-workspace .scroll-pane,
+.story-workspace .scroll-pane > .viewport,
+.story-workspace .text-area .content,
+.story-workspace .text-field,
+.story-workspace .combo-box {
+    -fx-background-color: #0f1117;
+    -fx-background: #0f1117;
+}
+
+.story-workspace .titled-pane > .title,
+.story-workspace .titled-pane > .content {
+    -fx-background-color: #171b26;
+    -fx-border-color: #334155;
+}
+
+.story-workspace .titled-pane,
+.story-workspace .check-box {
+    -fx-text-fill: #cbd5e1;
+}
+
+.story-workspace .button {
+    -fx-background-color: #263041;
+    -fx-text-fill: #f8fafc;
+    -fx-background-radius: 7px;
+}
+
+.story-workspace .send-button {
+    -fx-background-color: #2563eb;
+}
+
+.story-workspace .button:hover {
+    -fx-background-color: #334155;
+}
+
+.story-workspace .scroll-bar {
+    -fx-background-color: #171b26;
+}
+
+.story-workspace .corner {
+    -fx-background-color: #171b26;
+}
+
+.story-workspace .scroll-bar .thumb {
+    -fx-background-color: #475569;
+}
+
 .merge-column {
     -fx-spacing: 6px;
 }
@@ -320,3 +384,66 @@
     -fx-background-radius: 10px;
     -fx-border-radius: 10px;
 }
+
+/* Programmieragent: local text and verified PNG only, no embedded HTML. */
+.agent-pane { -fx-background-color: #111827; -fx-padding: 16px; }
+.agent-pane .label, .agent-pane .check-box { -fx-text-fill: #dce5f2; }
+.agent-pane .agent-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #f8fafc; }
+.agent-pane .agent-section { -fx-font-size: 15px; -fx-font-weight: bold; }
+.agent-pane .agent-help { -fx-text-fill: #a6b6cc; -fx-font-size: 12px; }
+.agent-pane .agent-status { -fx-background-color: #1c3047; -fx-padding: 10px 12px; -fx-background-radius: 8px; -fx-text-fill: #d4e8ff; -fx-max-width: infinity; }
+.agent-content { -fx-padding: 16px 12px; -fx-background-color: #111827; }
+.agent-pane .scroll-pane, .agent-pane .scroll-pane > .viewport { -fx-background-color: #111827; }
+.agent-pane .text-area, .agent-pane .text-field {
+    -fx-control-inner-background: #0f1726; -fx-text-fill: #e8eef7;
+    -fx-prompt-text-fill: #90a1b8; -fx-highlight-fill: #315989;
+    -fx-background-color: #30435d, #0f1726; -fx-background-insets: 0, 1;
+    -fx-background-radius: 6px;
+}
+.agent-pane .text-area .content { -fx-background-color: #0f1726; }
+.agent-pane .agent-code { -fx-font-family: "Consolas"; -fx-font-size: 13px; }
+.agent-pane .button { -fx-background-color: #2b3b53; -fx-text-fill: #f1f5fc; -fx-padding: 8px 12px; -fx-background-radius: 6px; }
+.agent-pane .button:hover { -fx-background-color: #3b5275; }
+.agent-pane .agent-primary { -fx-background-color: #285eb9; -fx-font-weight: bold; }
+.agent-pane .combo-box, .agent-pane .spinner { -fx-background-color: #2b3b53; }
+.agent-pane .combo-box .list-cell { -fx-text-fill: #e8eef7; -fx-background-color: #23334b; }
+.agent-pane .combo-box-popup .list-cell:hover { -fx-background-color: #37547b; }
+.agent-pane .tab-pane > .tab-header-area > .tab-header-background { -fx-background-color: #111827; }
+.agent-pane .tab-pane > .tab-header-area > .headers-region > .tab { -fx-background-color: #223149; -fx-padding: 7px 10px; }
+.agent-pane .tab-pane > .tab-header-area > .headers-region > .tab:selected { -fx-background-color: #365b8b; }
+.agent-pane .tab .tab-label { -fx-text-fill: #e8eef7; }
+.agent-pane .titled-pane > .title { -fx-background-color: #21334b; }
+.agent-pane .titled-pane { -fx-text-fill: #dce5f2; }
+.agent-pane .titled-pane > .content { -fx-background-color: #172337; -fx-border-color: #31465f; -fx-padding: 10px; }
+.agent-pane .check-box .box { -fx-background-color: #3c526c; }
+.agent-pane .check-box:selected .mark { -fx-background-color: #d7e8ff; }
+.agent-pane .progress-bar .track { -fx-background-color: #23334b; }
+.agent-pane .progress-bar .bar { -fx-background-color: #4b8ad8; }
+
+.work-queue { -fx-background-color: #171b26; -fx-padding: 14px; }
+.queue-content { -fx-padding: 12px 0; -fx-background-color: #171b26; }
+.work-queue .label, .work-queue .check-box, .queue-footer .label { -fx-text-fill: #e5e7eb; }
+.queue-footer { -fx-background-color: #171b26; -fx-padding: 8px 14px; -fx-border-color: #334155; -fx-border-width: 1px 0 0 0; }
+.queue-footer .label { -fx-font-size: 12px; }
+.work-queue .table-view { -fx-background-color: #0f1117; -fx-border-color: #334155; }
+.work-queue .table-view .column-header, .work-queue .table-view .filler { -fx-background-color: #263041; }
+.work-queue .table-row-cell { -fx-background-color: #171b26; -fx-cell-size: 48px; }
+.work-queue .table-row-cell:odd { -fx-background-color: #1e2430; }
+.work-queue .table-row-cell:selected { -fx-background-color: #334155; }
+.work-queue .table-cell { -fx-text-fill: #e5e7eb; -fx-border-color: transparent; -fx-alignment: CENTER_LEFT; }
+.work-queue .queue-running .queue-status-cell { -fx-text-fill: #68d9ce; }
+.work-queue .queue-waiting .queue-status-cell { -fx-text-fill: #93c5fd; }
+.work-queue .queue-review .queue-status-cell { -fx-text-fill: #f3d87c; }
+.work-queue .queue-failed .queue-status-cell { -fx-text-fill: #fca5a5; }
+.work-queue .queue-stale .queue-status-cell { -fx-text-fill: #cbd5e1; }
+.work-queue .queue-done .queue-status-cell { -fx-text-fill: #9dd8ab; }
+.work-queue .progress-bar .bar { -fx-background-color: #42b9aa; }
+.work-queue .progress-bar .track { -fx-background-color: #334155; }
+.work-queue .text-area { -fx-control-inner-background: #0f1117; -fx-text-fill: #e5e7eb; }
+.work-queue .tab-header-area .tab-header-background { -fx-background-color: #171b26; }
+.work-queue .tab { -fx-background-color: #263041; -fx-padding: 7px 10px; }
+.work-queue .tab:selected { -fx-background-color: #35465c; }
+.work-queue .tab .tab-label { -fx-text-fill: #e5e7eb; }
+.work-queue .text-area { -fx-prompt-text-fill: #94a3b8; }
+.work-queue .button, .queue-footer .button { -fx-background-color: #35465c; -fx-text-fill: #f1f5f9; -fx-background-radius: 6px; -fx-padding: 7px 12px; }
+.work-queue .button:hover, .queue-footer .button:hover { -fx-background-color: #48617f; }

@@ -1,0 +1,373 @@
+STORY-OBERFLAECHE: BEDIENUNG, AENDERUNGEN UND NACHWEISE
+Stand: 8. Oktober 2026
+
+1. Zweck und Grundentscheidung
+
+Die Storygenerierung besteht jetzt aus einem gemeinsamen Arbeitsbereich mit
+Projekt/Quellen, konkretem Auftrag und sichtbarer Ergebnispruefung. Quellen,
+vorhandener Storykontext und neue Dateivorschlaege haben unterschiedliche Rollen.
+Ein erfolgreich gestarteter oder beantworteter Auftrag gilt nicht automatisch
+als uebernommene Aenderung. Bestehende Projekte werden nicht neu initialisiert.
+
+Zwei Aufgaben bleiben im Hauptablauf:
+- Kontext aus Quellen aufbauen / aktualisieren.
+- Szene schreiben / fortsetzen.
+
+Die bisher ueber mehrere Entwurfsfunktionen verteilten Eingaben wurden daran
+ausgerichtet. Die Ausgabesprache bleibt standardmaessig Englisch; eine bewusst
+gewaehlte Sprache wird pro Projekt gespeichert. Chat, Audio und Video bleiben
+eigene Bereiche. Diese Ueberarbeitung veraendert ihre Modelle oder Funktionen
+nicht.
+
+2. Bisherige Felder und ihre heutige Bedeutung
+
+BISHER                                 HEUTE
+Versteckte Felder fuer Titel, Genre,    Neues Projekt: Projektname und freies
+Protagonist, Setting, Ton, Praemisse,    Story-Briefing. Das Briefing wird als
+Konflikt und Bootstrap                 sources/story-briefing.md gespeichert.
+                                       Es gibt kein erfundenes Anfangskapitel.
+
+Kapitel und Timeline-Zeitpunkt          Keine separaten Pflicht- oder Pseudo-
+                                       parameter. Sachliche Angaben gehoeren
+                                       in Quellen/Kontext, das konkrete Ziel
+                                       in den Auftrag. Keine Zwangschronologie.
+
+Analyseplan erstellen und Entwurf       Ein Modus fuer echten Kontextaufbau aus
+aus Dateien synthetisieren             allen regulaeren Quelldateien und dem
+                                       vorhandenen Kontext.
+
+Fortsetzung planen und                 Ein Schreibmodus mit Auftrag und
+Aus Datei fortsetzen                   Zieldatei. Eine Option nennt die aktuell
+                                       gewaehlte Datei als Arbeitsgrundlage.
+                                       Alle anderen Quellen bleiben im Auftrag.
+
+Schritte (vorbelegt 5)                  Entfernt. Die Zahl bewirkte bislang
+                                       keine fuenf voneinander getrennten
+                                       Modellschritte. Die Auswertung erfolgt
+                                       nun wirklich abschnittsweise im Worker.
+
+Festes Ziel manuscript/chapter-01.md    Freier, noch nicht vorhandener Vorschlag
+                                       manuscript/szene-001.md, danach 002 usw.
+                                       Eigene Namen/Unterordner bleiben moeglich.
+
+Gemeinsam veraenderter Dateipfad        Quelle und Dateivorschlag sind getrennte
+bei Quelle und Vorschlag               Ansichten. Ein Vorschlag kann die
+                                       Quelldateiauswahl nicht mehr umstellen.
+
+Workflow-Antwort als Hauptansicht       Sichtbare Vorschlagsliste, Original beim
+und versteckter Originalvergleich      Auftragsstart und editierbarer Vorschlag.
+                                       Rohantwort/Nachweise in einem zu Beginn
+                                       eingeklappten Detailbereich.
+
+Nur sichtbare Sammeluebernahme          Einzelne Vorschlaege oder alle offenen
+                                       nach bewusster Pruefung uebernehmen.
+
+Versteckte Wiederherstellung            Gespeicherte Auftraege mit Zeitpunkt,
+                                       neueste zuerst, gezielt einzeln laden.
+
+Versteckte Finalisieren-/Qdrant-        Nicht Bestandteil dieses Hauptablaufs.
+Schaltflaechen ohne klaren UI-Ablauf     Alte API-Methoden bestehen fuer Alt-
+                                       aufrufer fort; keine neue automatische
+                                       Finalisierung oder Qdrant-Schreibaktion.
+
+3. So wird gearbeitet
+
+A. Programm starten
+Im vorhandenen IntelliJ-Projekt
+C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware
+die Konfiguration "KI Chat starten" ausfuehren (Main: kioberflaeche.Main).
+Alternativ im Projektverzeichnis mit vorhandenem Maven: mvn -o javafx:run.
+Nach einem Update braucht eine bereits laufende Anwendung einen regulaeren
+Neustart, damit neue Klassen/FXML geladen werden. Die laufende Nutzeranwendung
+wurde fuer diese Arbeit nicht beendet. Die finale VM-Betriebsentscheidung steht
+im gemeinsamen ERGEBNIS.txt des Aenderungsordners, nicht in diesem Teilnachweis.
+Der vollstaendige Java-Projektstand wurde innerhalb dieses Auftrags zusaetzlich
+vom alten IdeaProjects-Ordner an den aktiven Workspace-Standort kopiert und
+geprueft. Der alte Ordner bleibt als Rueckfall erhalten. Einzelheiten stehen in
+JAVA-STANDORT-AENDERUNGEN.txt und JAVA-STANDORT-KOPIE.json. Historische Test- und
+Patchnachweise behalten den damaligen Quellpfad; neue Entwicklung erfolgt hier.
+
+B. Projekt vorbereiten
+Im Tab "Schreib-AI" ein vorhandenes Projekt waehlen oder "Neues Projekt anlegen"
+aufklappen. Name und Briefing eingeben. Ein bestehender Name wird abgewiesen;
+bestehende Dateien bleiben erhalten. Standard-Arbeitsplatz:
+C:\KI Arbeitsbereich\SchreibAI\Arbeitsprojekte
+
+Weitere Markdown-/Textquellen koennen im jeweiligen Projektordner abgelegt und
+mit "Neu laden" eingelesen werden. Die Dateiliste nennt Quelle, Kontext oder
+bekannte automatische Datei. Der Editor bearbeitet genau die angezeigte Datei.
+"Datei speichern" prueft den Ausgangsinhalt, sichert ihn gezielt und schreibt
+erst dann die eigene Aenderung. "Entwurf verwerfen" laedt den aktuellen
+Dateiinhalt neu. Bei einem Schreibfehler bleiben die lokalen Entwuerfe erhalten.
+
+C. Kontext aufbauen
+Auftragsart "Kontext aus Quellen aufbauen / aktualisieren" waehlen. Eine kurze
+Anweisung kann Schwerpunkte nennen, z. B. "Motive und Widersprueche erhalten;
+offene Zeitangaben als offen kennzeichnen." Eine leere Anweisung ist hier
+zulaessig: Der Modus hat bereits die konkrete Aufgabe des Kontextaufbaus.
+
+D. Szene verfassen
+"Szene schreiben / fortsetzen" waehlen, konkreten Auftrag und Sprache festlegen.
+Das Feld fuer die Zieldatei erscheint nur in diesem Modus. Zulassung:
+manuscript/<name>.md, einschliesslich Unterordnern; Windows-reservierte Namen,
+Pfadausbrueche, interne Verzeichnisse und der alte automatische imported-draft
+werden abgewiesen. Backslashes werden zu normalen Projekttrennern normalisiert.
+
+Der Schreibvorschlag ist immer der komplette Inhalt der Zieldatei. Er wird nie
+automatisch angehaengt. Ein neues Ziel erstellt nach Uebernahme eine neue Datei.
+Ein vorhandenes Ziel wird vollstaendig ersetzt, worauf die Oberflaeche vor dem
+Start hinweist. Soll nur eine weitere Szene entstehen, den vorgeschlagenen
+neuen Dateinamen verwenden. Soll dieselbe Szene ueberarbeitet werden, kann ihr
+bestehender Pfad bewusst gewaehlt und der Gesamtvergleich geprueft werden.
+
+"Ausgewaehlte Datei als konkrete Arbeitsgrundlage nennen" fuegt nur einen
+Dateiverweis zum Auftrag hinzu. Es begrenzt den Kontext nicht auf diese Datei.
+
+E. Auftrag und Umfang
+Die Anweisung ist auf 1200 UTF-8-Bytes begrenzt, einschliesslich des optionalen
+Dateiverweises. Der Zaehler zeigt den tatsaechlichen Umfang. Umlaute und andere
+Sonderzeichen koennen mehrere Bytes belegen. Zu lange Auftraege werden bereits
+vor dem HTTP-Aufruf abgewiesen; nichts wird still abgeschnitten. Laengere
+Inhalte gehoeren in Quelldateien oder ins Story-Briefing.
+
+Das neue Projektbriefing unterliegt diesem kurzen Anweisungslimit nicht; es
+wird wie andere Quellen abschnittsweise verarbeitet. Der Worker hat eigene
+explizite Gesamt-/Abschnittsgrenzen (siehe BACKEND-AENDERUNGEN.txt). Zu grosse
+Auftraege melden einen Fehler statt stiller Kuerzung.
+
+Waehrend eines Auftrags sind Projekt-, Aufgaben- und Pruefeingaben gesperrt.
+Projekt, Sprache, Ziel, Anweisung und Editorentwuerfe werden vor dem Hintergrund-
+aufruf festgehalten. Die Verarbeitung ist CPU-orientiert und kann lange dauern.
+Die UI wartet fuer synthesize/continue mindestens 12 Stunden plus 5 Minuten;
+das normale Worker-Joblimit betraegt 12 Stunden. Dies ist eine Obergrenze,
+keine Laufzeitzusage. Die UI hat keinen Live-Prozentfortschritt.
+
+F. Vorschlaege pruefen
+Nach Erfolg jeden Vorschlag auswaehlen: links steht das Original beim
+Auftragsstart, rechts der vorgeschlagene Gesamtinhalt. Rechts sind eigene
+Korrekturen moeglich. Dann einzeln oder alle offenen uebernehmen. Eine Auswahl
+in dieser Liste aendert niemals den linken Quelldatei-Editor oder dessen Pfad.
+
+Die Uebernahme prueft, ob die Zieldatei noch genau dem festgehaltenen Original
+entspricht. Zwischenzeitliche andere Aenderungen werden nicht ueberschrieben.
+Bei mehreren Vorschlaegen bleiben Konflikte offen, waehrend unabhaengige,
+erfolgreich uebernommene Dateien als abgeschlossen gelten. Kein pauschales
+Loeschen des Temp-Ordners; andere Auftraege bleiben erhalten.
+
+4. Kontextdaten und Erhalt der Quellen
+
+Die Oberflaeche liest regulaere .md- und .txt-Dateien als UTF-8 vollstaendig ein.
+Es gibt keine Ersetzung durch nur geaenderte Passagen, keine Anfang-/Ende-
+Stichproben und keinen "bereits verarbeitet"-Cache, der spaetere Quellen
+aus dem Kontext entfernt.
+
+Dateien unter manuscript/, chapters/, final/, overview/, timeline/, characters/,
+world/ und system/ werden als vorhandener Kontext gesondert mitgegeben.
+Andere regulaere Textdateien sind Quellen. Ungespeicherte Editorentwuerfe werden
+als Arbeitskontext mitgegeben; der Originalvergleich bezieht sich weiterhin auf
+den gespeicherten Dateistand. Die Quelldatei selbst aendert sich dadurch nicht.
+
+Bewusst nicht erneut als Sachquelle eingelesen werden:
+- interne .schreib-ai-*-Dateien/-Verzeichnisse, insbesondere Journale/Sicherungen;
+- manuscript/imported-draft.md (bekannte alte automatische Quellenkopie);
+- overview/source-map.md;
+- system/ki-synthesis-raw.md, system/pending-updates.md, system/change-log.md;
+- system/analysis-runs/.
+Die bekannten nichtinternen Dateien bleiben in der Dateiliste lesbar.
+Gewoehnliche Dateinamen mit den Worten "imported" oder "draft" werden nicht
+mehr pauschal ausgeschlossen. Daten werden durch diese Filter nicht geloescht.
+
+Die beiden neuen HTTP-Auftraege senden immer explizit documents und
+contextDocuments; der Server soll kein anderes Gastprojekt als Ersatzquelle
+heranziehen. Vollstaendige technische Eingabeabdeckung ist keine Garantie,
+dass ein Modell jede Bedeutung, Nuance oder jeden Widerspruch richtig erfasst.
+Die Quellen bleiben deshalb erhalten und die Ergebnispruefung bleibt notwendig.
+
+Wenn der Server meldet, dass die abschliessende Qualitaetspruefung aus
+Platzgruenden zusammengefassten Kontext verwendet, zeigt die UI diesen Hinweis
+direkt im Ergebnis und im Status. Er bleibt als Zusatz zur Ergebnisbeschreibung
+auch im gespeicherten Journal und nach "Laden" sichtbar. Beispiel:
+"Die Abschlussprüfung verwendet zusammengefassten Kontext. Bitte mit den
+Originalen vergleichen."
+Hinweistexte werden fuer die Anzeige auf 700 Unicode-Zeichen begrenzt; der
+vollstaendige Text bleibt in der Rohantwort erhalten. Die bisherigen
+degraded-/fallback-Meldungen werden weiterhin erkannt, wenn kein ausdruecklicher
+Hinweistext vorliegt. Ein solcher Hinweis wird nicht als Fehler oder als
+automatische Annahme des Vorschlags behandelt.
+
+Eine formal gueltige negative fachliche Modellbewertung wird als
+needs_human_review zur bewussten menschlichen Pruefung weitergegeben. Eine solche
+Bewertung kann selbst fehlerhaft sein; sie schreibt die Story nicht automatisch
+um und bricht den Auftrag nicht allein deshalb ab. Der dazugehoerige Warnhinweis
+ist im Ergebnis sichtbar und wird gespeichert. Technische Vertragsfehler,
+ungueltige Modellantworten und Zeitueberschreitungen bleiben Fehlerfaelle ohne
+uebernehmbare Dateiaenderungen. Die sichtbare Freigabe durch den Menschen bleibt
+bei allen Vorschlaegen erforderlich. Modellbefunde und Begruendung dieser
+Unterscheidung sind im gemeinsamen Backend-/Betriebsbericht dokumentiert.
+
+5. Fehler, Unterbrechungen und Wiederaufnahme
+
+Jeder abgeschlossene Aufruf erhaelt ein eigenes lokales Journal:
+<Projekt>\.schreib-ai-temp\task-<UUID>.json
+Es enthaelt den Originalvergleich, manuell bearbeitete Vorschlaege, die gesamte
+Serverantwort und ihren Analyse-/Quellennachweis. Die Journale verschiedener
+Auftraege werden nicht miteinander verschmolzen. Fehlerantworten behalten
+Analyse-Nachweise, bieten jedoch keine uebernehmbaren Aenderungen an.
+
+Beim Projektwechsel/normalen Schliessen werden lokale Editorentwuerfe und
+offene Vorschlagsbearbeitungen gesichert. "Laden" oeffnet genau den gewaehlten
+Auftrag. Alte rohe Workflow-Zwischenstaende koennen als Altstand gelesen werden;
+die UI weist deutlich darauf hin, dass deren urspruengliche Dateibasis unbekannt
+ist. Ihr Vergleich zeigt dann den heutigen Stand.
+
+Uebernahmeprotokoll Version 3:
+1. Originalstand pruefen und beabsichtigten vollstaendigen Schreibinhalt als
+   writeIntent im Journal sichern.
+2. Vorhandene Datei sichern, neuen Inhalt ueber eine temporaere Datei ersetzen.
+3. applied=true erst als abgeschlossen behandeln, wenn das Journal gespeichert
+   wurde. Schlaegt dieser Abschluss fehl, wird applied im Arbeitsspeicher
+   zurueckgenommen und der Vorschlag bleibt offen.
+4. Nach Neustart oder erneutem Uebernehmen den Zielinhalt mit writeIntent
+   abgleichen. Entspricht er bereits dem Vorschlag, nur den Abschluss bestaetigen;
+   die Datei und Original-Sicherung werden nicht erneut ueberschrieben.
+   Ist noch das Original vorhanden, die vorbereitete Uebernahme fortsetzen.
+   Anderer Inhalt bleibt ein Konflikt.
+
+Ein vorbereiteter, noch offener Schreibinhalt ist bis zum Abschluss nicht
+editierbar. Die Oberflaeche zeigt "Uebernahme fortsetzen". Erst wenn auch der
+gesicherte Journalstand vollstaendig bestaetigt ist, wandert genau dieses
+Journal nach .schreib-ai-history/. Backups liegen unter
+.schreib-ai-backups/<Auftrags-ID>/<urspruenglicher relativer Pfad>.
+Eigene Editor-Speicherungen erhalten ebenfalls eine getrennte Sicherung.
+
+Dies behandelt insbesondere Prozessunterbrechungen zwischen Dateischreiben
+und Journalabschluss. Es ersetzt keine Laufwerks-/Systemdatensicherung und
+ist keine Transaktion ueber mehrere Storydateien zugleich.
+
+Wenn die Anwendung oder Netzwerkverbindung waehrend der noch laufenden
+Modellanalyse abbricht, kann die UI keine nie empfangene Antwort rekonstruieren.
+Es gibt derzeit keine dauerhafte serverseitige Auftragswarteschlange mit
+Wiederaufnahme-ID und keinen Abbrechen-Knopf. Erhaltene Fehleranalysen bleiben
+lokal nachvollziehbar; ein verlorener laufender Auftrag muss spaeter erneut
+gestartet werden. Es entstehen dabei keine automatisch angenommenen Storydateien.
+
+6. Behobene konkrete Oberflaechenfehler
+
+- Sichtbare Sammeluebernahme ohne sichtbaren Original-/Vorschlagsvergleich.
+- Vorschlagsauswahl stellte den Quellenpfad um, ohne passenden Editorinhalt.
+- Teilweise fehlgeschlagene Uebernahme entfernte auch offene Vorschlaege.
+- Alte Wiederherstellung konnte verschiedene Auftraege unklar zusammenfuehren.
+- Veraenderbare Projekt-/Auftragsauswahl waehrend eines Hintergrundaufrufs.
+- Erfolgreiche HTTP-Antwort wurde trotz enthaltenem Fehler als Ergebnis behandelt.
+- Quellen wurden gekuerzt oder voreilig als verarbeitet aus spaeterem Kontext
+  entfernt. Der neue UI-Pfad besitzt diesen Mechanismus nicht mehr.
+- Journal konnte nach erfolgreichem Dateischreiben und fehlgeschlagenem
+  Abschlussspeichern einen falschen angewendeten Zustand behalten.
+- Ungueltige JSON-Anfragen bei Steuerzeichen wie Formfeed in Textquellen.
+- Starres Ziel chapter-01.md mit unklarer Ersetzungs-/Anhaengesemantik.
+- Enges Fenster konnte Beschriftungen von "Laden"/"Neu laden" abschneiden.
+- Helle Standardflaechen passten nicht zum vorhandenen dunklen Farbschema.
+
+7. Technische Aenderungsorte
+
+StoryPaneController.java: eigener Controller fuer Projekt, Auftrag und Pruefung.
+ChatController.java: delegiert Story-Initialisierung und offene-Zwischenstaende-
+Abfrage; bisherige doppelte Story-Implementierung entfernt.
+StoryWorkspace.java: Dateiklassifikation, komplette Eingaben, sichere Projekt-
+pfade, Zieldateiregeln, Bytezaehler, konfliktgeprueftes Schreiben/Sichern.
+StoryReviewStore.java: getrennte Journale, Vergleiche, explizite Uebernahme,
+Wiederaufnahme und gezielte Archivierung.
+SchreibAiWorkflowClient.java: zwei aktuelle HTTP-Vertraege, getrennte Quellen/
+Kontextlisten, Antwortvalidierung, vollstaendiges JSON-Escaping und Fehlernachweis.
+story_tab.fxml / chat.css: zusammengefuehrter Ablauf, sichtbare Vergleiche,
+eingeklappte Details, scrollbare Bereiche und dunkle Darstellungsflaechen.
+
+Alte Clientmethoden bleiben fuer bestehende Aufrufer erhalten. Der neue Tab
+verwendet buildContext/writeScene, nicht bootstrap/analyze/finalize/qdrant-sync.
+Die produktiven n8n-Workflows liegen weiterhin im Backendprojekt unter workflows/;
+die JSON-Datei im Java-docs-Verzeichnis bleibt eine Referenz.
+
+8. Pruefungen und ihre Aussagekraft
+
+java-story-code-build.log: Offline-Maven-Kompilierung aller 26 Java-Quellen erfolgreich.
+java-story-build.log: anschliessender Build mit den endgueltigen FXML-/CSS-Ressourcen.
+java-story-tests.log: StoryUiRegression.java erfolgreich mit eigens angelegten
+synthetischen Projekten unter dem Aenderungsordner. Kein bestehendes Story_01/
+Story_02/Story_03-Projekt wurde als Testfixture benutzt.
+Der Test setzt workspaceField vor configure() ausschliesslich im Speicher des
+separaten FXML-Harness. Keine globale Arbeitsordnerwahl und keine produktive
+config/local.properties wurde geaendert. Testjournale und Storydateien liegen
+ausschliesslich unter test-workspace-<UUID> im Aenderungsordner.
+
+Geprueft wurden echte Dateizugriffe, echter lokaler HTTP-Transport mit kontrollierten
+Antworten und echte FXML/JavaFX-Controller:
+- keine Ueberschreibung existierender neuer Projektnamen, Pfadausbruch abgewiesen;
+- lange Quelldatei ueber 100.000 Zeichen vollstaendig im HTTP-Inhalt;
+- getrennte Quellen/Kontext, Editoroverlay und unveraenderter Originalvergleich;
+- manuelle Vorschlagsaenderung und komplette Rohantwort nach Journal-Neuladen;
+- fremde Dateiaenderung erhalten, gezielte Backups, Teilfehler bleiben offen;
+- Wiederaufnahme vor und nach Zielschreiben sowie tatsaechlicher IOException
+  beim Abschlussspeichern ohne falsches applied=true;
+- Projekt-ID-Widerspruch und doppelte Ziele abgewiesen;
+- HTTP 200 mit ok=false als Fehler samt erhaltenem Analysenachweis;
+- alle JSON-Steuerzeichen U+0000 bis U+001F, Anfuehrungszeichen, Backslash,
+  Umlaute und Emoji unveraendert durch den HTTP-Transport;
+- Zielregeln und Windows-reservierte Namen, neue freie Szenenpfade;
+- 1200-Byte-Grenze inklusive Dateiverweis bereits in der echten UI;
+- Projekteingaben waehrend Anfrage gesperrt;
+- Vorschlagsauswahl veraendert Quelleneditor und Pfad nicht;
+- fehlgeschlagener Auftrag erlaubt keine Uebernahme und bleibt nachvollziehbar.
+- ausdruecklicher Server-Qualitaetshinweis, 700-Zeichen-Anzeigegrenze mit Emoji,
+  alte degraded-/fallback-Flags und sichtbarer Hinweis nach echtem UI-Neuladen.
+
+PNG-Sichtpruefung: story-ui-1280.png, story-ui-920.png,
+story-ui-scene-1280.png, story-ui-scene-920.png, story-ui-running-1280.png.
+Ergaenzend story-ui-620.png prueft den schmalen Story-Inhalt mit Platz fuer die
+Chatseitenleiste im kleinsten Gesamtfenster. Es handelt sich um den Story-Inhalt,
+nicht um Aufnahmen der bestehenden Nutzeranwendung. Bei geringerer Hoehe sind
+die beiden Spalten einzeln scrollbar; die Pruefung ist nicht ausgeblendet.
+story-ui-review-1280.png zeigt den Original-/Vorschlagsvergleich einschliesslich
+Uebernahmeknoepfen; story-ui-new-project-1280.png die ausgeklappte Projektanlage.
+
+Die JavaFX-Warnung "classes were loaded from unnamed module" gehoert zum
+isolierten Classpath-Teststart; die Regression wurde erfolgreich abgeschlossen.
+Diese UI-Tests simulieren Modellantworten. Echte CPU-Modelltests und Gast-
+Bereitstellung werden getrennt im gemeinsamen Aenderungs-/Betriebsbericht belegt.
+
+9. Aenderungsnachweis und Ruecknahme
+
+Vorherdateien: Aenderungen-2026-10-08-Story-Oberflaeche/before-java/.
+Gezielter inkrementeller Patch: UI-INCREMENTAL.patch.
+Dateiliste mit Vorher-/Nachher-Hashes: UI-DATEINACHWEIS.json.
+Der Patch vergleicht den gesicherten Beginn dieses Auftrags mit dem Ergebnis;
+er basiert nicht pauschal auf Git HEAD und setzt auf vorhandener Nutzerarbeit auf.
+
+Ruecknahme nur gezielt nach Sicherung eventueller spaeterer Bearbeitungen:
+geänderte Bestandsdateien aus before-java wiederherstellen, die in der Dateiliste
+als neu markierten Quellen entfernen, Java neu kompilieren und normal starten.
+Nicht die gesamten Projekt-/Storydaten durch alte Verzeichnisse ersetzen.
+Journale, Backups und Quellen bleiben Daten des Arbeitsprojekts und duerfen
+nicht mit einem Code-Rollback geloescht werden. Ein alter Controller kennt das
+neue Journalformat nicht; offene neue Auftraege daher zuerst sichern/abschliessen.
+Workflow und Worker muessen bei Ruecknahme gemeinsam zu einem zueinander
+passenden Stand zurueckkehren; den Gastteil beschreibt der gemeinsame Bericht.
+
+10. Aktiver Java-Standort nach der abschliessenden Kopie
+
+Aktiv: C:\KI Arbeitsbereich\Eigene AI\Projekt\KI Oberflaechensoftware.
+Rueckfall: C:\Users\User\IdeaProjects\KI Oberflaechensoftware.
+Der alte Ordner wurde weder verschoben noch geloescht und nicht durch eine
+Verknuepfung ersetzt. .git, .idea, Quelltexte, Ressourcen, private Konfiguration,
+lokale Chats und der zunaechst vorhandene Buildstand wurden vollstaendig kopiert.
+Die Kopie wurde vor Anpassungen mit SHA-256 gegen den vor und nach der Kopie
+unveraenderten Quellstand verglichen. Die erzeugbaren Klassen und Ressourcen
+wurden am neuen Ort neu gebaut; die Anwendung/IDE des Nutzers lief dabei weiter.
+
+Die IntelliJ-Run-Konfiguration nutzt bereits $PROJECT_DIR$ und ist portabel.
+Ein automatischer AppConfig-Fallback zu user.home/IdeaProjects/... wurde im
+neuen aktiven Quellstand entfernt, damit eine fehlende neue Konfiguration nicht
+unbemerkt Daten des Rueckfallstandes laedt. Projektlokale Konfiguration,
+Konfiguration bei den geladenen Klassen sowie ausdrueckliche ki.config/KI_CONFIG-
+Angaben bleiben unterstuetzt. Keine Zugangsdaten wurden geaendert oder ausgegeben.
+HIER-STARTEN.txt im neuen Projekt beschreibt das Oeffnen in IntelliJ; AGENTS.md
+markiert den aktiven Entwicklungsstand und verweist auf die Workspace-Regeln.

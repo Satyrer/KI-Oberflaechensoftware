@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ScrollPane?>
@@ -25,15 +26,27 @@
         </VBox>
     </left>
     <center>
-        <TabPane styleClass="main-tabs" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="mainTabs" styleClass="main-tabs" tabClosingPolicy="UNAVAILABLE">
             <Tab text="KI Chat">
                 <SplitPane dividerPositions="0.72" styleClass="content-split">
                     <BorderPane styleClass="chat-pane">
                         <top>
-                            <HBox styleClass="chat-header">
+                            <VBox spacing="6" styleClass="chat-header,model-controls">
+                              <HBox spacing="8">
                                 <Label fx:id="titleLabel" text="KI Chat" styleClass="chat-title"/>
-                                <Label fx:id="statusLabel" text="Bereit" styleClass="chat-status"/>
-                            </HBox>
+                                <Label fx:id="statusLabel" text="Bereit" wrapText="true" styleClass="chat-status"/>
+                              </HBox>
+                              <Label text="Modell und Aufgabe" styleClass="remote-admin-help"/>
+                              <ComboBox fx:id="chatModelCombo" maxWidth="Infinity"/>
+                              <HBox spacing="8">
+                                <ComboBox fx:id="chatTaskCombo" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="refreshChatModelsButton" text="Modelle laden"/>
+                              </HBox>
+                              <Label fx:id="chatModelHint" wrapText="true" styleClass="remote-admin-help"/>
+                              <CheckBox fx:id="chatMemoryOnlyCheck" text="Nur anzeigen – nicht im Chat speichern" wrapText="true"/>
+                              <Label fx:id="chatStorageModeLabel" wrapText="true" styleClass="remote-admin-help"/>
+                              <Button fx:id="openChatMemoryOnlyButton" text="Dolphin – leere Anzeige ohne Speicherung" wrapText="true" maxWidth="Infinity"/>
+                            </VBox>
                         </top>
                         <center>
                             <ScrollPane fx:id="messagesScrollPane" fitToWidth="true" pannable="true" styleClass="messages-scroll-pane">
@@ -71,6 +84,18 @@
             <Tab text="Sound zu TXT">
                 <fx:include source="transcription_tab.fxml"/>
             </Tab>
+            <Tab text="Programmieragent">
+                <fx:include fx:id="agentTab" source="agent_tab.fxml"/>
+            </Tab>
+            <Tab fx:id="workQueueTab" text="Queue">
+                <fx:include fx:id="workQueue" source="work_queue.fxml"/>
+            </Tab>
         </TabPane>
     </center>
+    <bottom>
+        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="queue-footer">
+            <Label fx:id="workQueueSummary" text="Queue wird vorbereitet" wrapText="true" minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Button text="Queue anzeigen" onAction="#showWorkQueue" minWidth="-Infinity"/>
+        </HBox>
+    </bottom>
 </BorderPane>
