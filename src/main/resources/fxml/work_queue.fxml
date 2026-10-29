@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="kioberflaeche.controller.WorkQueueController" fx:id="queueRoot" spacing="10" styleClass="work-queue">
+    <Label text="Queue" styleClass="remote-admin-title"/>
+    <TabPane fx:id="sources" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <Tab text="Diese Anwendung">
+            <VBox spacing="10" styleClass="queue-content">
+                <FlowPane hgap="12" vgap="8">
+                    <Label fx:id="localSummary"/>
+                    <CheckBox fx:id="showFinished" text="Verlauf anzeigen"/>
+                    <Button text="Verlauf leeren" onAction="#clearFinished">
+                        <tooltip><Tooltip text="Nur abgeschlossene Eintraege dieser Sitzung aus der Anzeige entfernen"/></tooltip>
+                    </Button>
+                </FlowPane>
+                <TableView fx:id="localTable" VBox.vgrow="ALWAYS"/>
+                <Label text="Auftraege dieser Sitzung und des verbundenen Agentenprojekts" styleClass="remote-section-title" wrapText="true"/>
+            </VBox>
+        </Tab>
+        <Tab text="Server-Queue">
+            <VBox spacing="10" styleClass="queue-content">
+                <FlowPane hgap="10" vgap="8">
+                    <Label fx:id="serverSummary" text="Serverstand wird gelesen" minHeight="-Infinity"/>
+                    <CheckBox fx:id="showServerFinished" text="Verlauf anzeigen">
+                        <tooltip><Tooltip text="Auch beendete, fehlgeschlagene und zur fachlichen Pruefung bereitliegende Auftraege anzeigen. Dolphinlauf zeigt ausschliesslich fluechtige Statusmetadaten."/></tooltip>
+                    </CheckBox>
+                    <Button fx:id="refreshServerButton" text="Aktualisieren" onAction="#refreshServer"/>
+                    <Button text="Statusordner waehlen" onAction="#chooseDirectory"/>
+                </FlowPane>
+                <Label fx:id="serverHealth" wrapText="true" minHeight="-Infinity" minWidth="0" maxWidth="Infinity"/>
+                <TableView fx:id="serverTable" VBox.vgrow="ALWAYS"/>
+                <Label fx:id="sourceDirectoryLabel" styleClass="remote-section-title" wrapText="true" minHeight="-Infinity" minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+        </Tab>
+    </TabPane>
+    <TextArea fx:id="selectionDetails" editable="false" wrapText="true" prefRowCount="4" minHeight="75" maxHeight="135" promptText="Auftrag auswaehlen"/>
+</VBox>
