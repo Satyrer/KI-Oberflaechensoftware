@@ -1,0 +1,117 @@
+{
+  "id": "AiModelCatalog20261016",
+  "name": "Lokaler Modellkatalog",
+  "nodes": [
+    {
+      "id": "f0429d9a-e045-5bb2-a650-832e79ee5db5",
+      "name": "Model Catalog Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "schreib-ai/models",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "ai-model-catalog-20261016"
+    },
+    {
+      "id": "56147fba-30bb-5d96-b035-646d7453a40e",
+      "name": "Read Model Catalog",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "url": "http://schreib-ai-worker:8090/models",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "ec321208-34f2-59c1-ac43-0fda132d7cc1",
+      "name": "Check Model Catalog Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const status = Number($json.statusCode || ($json.error ? 502 : 200));\nconst body = $json.body ?? $json;\nif (!body || typeof body !== 'object' || Array.isArray(body)) return [{json:{httpStatus:502,body:{ok:false,error:{code:'invalid_service_response',message:'Der Dienst lieferte keine gueltige Antwort.'}}}}];\nreturn [{json:{httpStatus:status >= 400 ? status : body.ok === false ? 502 : 200,body}}];"
+      }
+    },
+    {
+      "id": "3aa61378-19aa-5b86-9264-caa851c5d816",
+      "name": "Return Model Catalog",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Model Catalog Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read Model Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Model Catalog": {
+      "main": [
+        [
+          {
+            "node": "Check Model Catalog Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Model Catalog Result": {
+      "main": [
+        [
+          {
+            "node": "Return Model Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false
+}

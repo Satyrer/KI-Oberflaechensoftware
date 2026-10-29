@@ -65,7 +65,7 @@
       "typeVersion": 1,
       "credentials": {
         "ollamaApi": {
-          "id": "74plNGSKxqi2ENGg",
+          "id": "8ZRlzWgVUi79bCU8",
           "name": "Ollama account"
         }
       }
@@ -159,7 +159,7 @@
       "typeVersion": 1,
       "credentials": {
         "ollamaApi": {
-          "id": "74plNGSKxqi2ENGg",
+          "id": "8ZRlzWgVUi79bCU8",
           "name": "Ollama account"
         }
       }
@@ -219,7 +219,7 @@
       "typeVersion": 1,
       "credentials": {
         "ollamaApi": {
-          "id": "74plNGSKxqi2ENGg",
+          "id": "8ZRlzWgVUi79bCU8",
           "name": "Ollama account"
         }
       }
@@ -316,7 +316,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || $json;\nreturn [{ json: { ...body, chatInput: body.chatInput || body.message || body.text || \"\", sessionId: body.sessionId || body.session_id || \"java-chat\" } }];"
+        "jsCode": "const body = $json.body || $json;\nreturn [{ json: { ...body, modelSelection: body.modelSelection ?? 'auto', task: body.task ?? 'auto', chatInput: body.chatInput || body.message || body.text || '', sessionId: body.sessionId || body.session_id || 'java-chat' } }];"
       },
       "id": "0698ca39-fdd3-45f5-91e6-00d65452ba80",
       "name": "Normalize KI Chat Input",
@@ -326,6 +326,65 @@
         1440,
         520
       ]
+    },
+    {
+      "id": "6a8e14b9-bc73-5079-8d99-47ae1cc96432",
+      "name": "Route Java Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1550,
+        750
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://schreib-ai-worker:8090/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 2700000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "id": "830183fc-6f81-57f5-ba65-3439ec6558c4",
+      "name": "Check Java Chat Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        750
+      ],
+      "parameters": {
+        "jsCode": "const status = Number($json.statusCode || ($json.error ? 502 : 200));\nconst body = $json.body ?? $json;\nif (!body || typeof body !== 'object' || Array.isArray(body)) return [{json:{httpStatus:502,body:{ok:false,error:{code:'invalid_service_response',message:'Der Dienst lieferte keine gueltige Antwort.'}}}}];\nreturn [{json:{httpStatus:status >= 400 ? status : body.ok === false ? 502 : 200,body}}];"
+      }
+    },
+    {
+      "id": "598c4aae-7518-5206-a783-945255e3d725",
+      "name": "Return Routed Java Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2000,
+        750
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -455,7 +514,29 @@
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Route Java Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Java Chat": {
+      "main": [
+        [
+          {
+            "node": "Check Java Chat Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Java Chat Result": {
+      "main": [
+        [
+          {
+            "node": "Return Routed Java Chat",
             "type": "main",
             "index": 0
           }

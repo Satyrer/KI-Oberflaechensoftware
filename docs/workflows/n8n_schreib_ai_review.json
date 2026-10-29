@@ -26,7 +26,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
-        "options": {}
+        "options": {
+          "timeout": 43200000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "a2916e6a-67b8-4e7c-8597-c79219347d74",
       "name": "Create Review Plan",
@@ -35,20 +44,24 @@
       "position": [
         520,
         280
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "ec3d0b77-8f05-46da-9491-9b7a02112d7d",
       "name": "Return Review Plan",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1080,
         280
       ]
     },
@@ -76,7 +89,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
-        "options": {}
+        "options": {
+          "timeout": 43200000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "a2b17c56-8c88-4dd2-9d75-20a77493041c",
       "name": "Apply Approved Updates",
@@ -85,36 +107,40 @@
       "position": [
         520,
         560
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "bae6fa15-c05b-4e12-bb9c-d48f1780fab1",
       "name": "Return Apply Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1080,
         560
       ]
     },
     {
       "parameters": {
-        "content": "## Schreib-AI Review, Story-Verwaltung und Qdrant Memory\n\nPOST /webhook/schreib-ai/analyze fuer Dokumente/Aenderungen.\n\nPOST /webhook/schreib-ai/accept fuer freigegebene Updates; der Worker synchronisiert geaenderte Dateien nach Qdrant.\n\nPOST /webhook/schreib-ai/story mit action list/read/write/append/context/qdrant_sync/qdrant_search fuer lokale Story-Dateien und Memory.\n\nPOST /webhook/schreib-ai/continue baut Kontext aus lokalen Schichten plus Qdrant-Retrieval.\n\nPOST /webhook/schreib-ai/qdrant-sync reindiziert die Story-Memory in Qdrant.\n\nPOST /webhook/schreib-ai/qdrant-search sucht gezielt in der Story-Memory.",
-        "height": 520,
-        "width": 520
+        "content": "## Schreib-AI: Kontext, Auftrag, Vorschlagspruefung\n\nsynthesize baut aus Briefing und allen Quellen einen pruefbaren Kontextvorschlag. continue schreibt mit diesem Projektkontext. finalize bereitet den Abschluss vor.\n\nAlle Modell- und Mehrpassarbeit liegt im Schreib-Worker. n8n leitet die unveraenderten Auftragsdaten weiter und antwortet nur nach ausdruecklichem Worker-Erfolg mit HTTP 2xx. Fehler bleiben HTTP 4xx/5xx und enthalten keine anwendbaren Dateiaenderungen.\n\nVorschlaege werden erst nach separater Freigabe ueber accept angewendet. Kein Generierungszweig fuehrt automatisch zu accept.\n\nBestehende POST-Endpunkte: analyze, accept, story, continue, synthesize, finalize, qdrant-sync, qdrant-search unter /webhook/schreib-ai/.\n\nCPU-Mehrpassauftraege: Worker bis 12 Stunden; synthesize/continue erhalten 2 Minuten HTTP-Reserve fuer Abschluss und Fehlernachweis. Andere Workerauftraege: 12 Stunden; reine Qdrant-Suche: 3 Minuten. Keine automatischen Wiederholungen schreibender Auftraege.",
+        "height": 540,
+        "width": 1100
       },
       "id": "ae9f7fd2-9153-4bb2-85a5-fbd317cd4dfa",
       "name": "Workflow Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        180,
-        -120
+        240,
+        -400
       ]
     },
     {
@@ -141,7 +167,16 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
-        "options": {}
+        "options": {
+          "timeout": 43200000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
       },
       "id": "6ad70041-7677-493b-acd9-e62017dd6a7d",
       "name": "Story File Action",
@@ -150,20 +185,24 @@
       "position": [
         520,
         820
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "deab5e13-19c6-4eaf-978d-a98e024a177d",
       "name": "Return Story Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1080,
         820
       ]
     },
@@ -192,7 +231,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
         "options": {
-          "timeout": 900000
+          "timeout": 43320000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
         }
       },
       "id": "49fe811e-e54b-4040-ac2b-462235418fc3",
@@ -202,84 +248,22 @@
       "position": [
         520,
         1100
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "bd29bc97-b5e8-4f13-a956-0e6fb2975a7e",
       "name": "Return Continue Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        800,
-        1100
-      ]
-    },
-    {
-      "parameters": {
-        "options": {
-          "systemMessage": "Du bist der Schreib-AI Writer Agent. Nutze den vom Worker gelieferten Schicht-Kontext. Schreibe keine Dateien direkt. Gib Teilschritte, Kontinuitaetspruefung, Manuskriptvorschlag und vorgeschlagene Updates strukturiert aus."
-        }
-      },
-      "id": "d8a2bbd5-a9e6-4384-a6bc-0d579693aa84",
-      "name": "Schreib-AI Agent",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2,
-      "position": [
-        800,
-        1100
-      ]
-    },
-    {
-      "parameters": {
-        "model": "mistral-rag:latest",
-        "options": {}
-      },
-      "id": "b81dcf6a-6089-47dc-9009-70c20b2cb44e",
-      "name": "Schreib-AI Ollama Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
-      "typeVersion": 1,
-      "position": [
-        680,
-        1320
-      ],
-      "credentials": {
-        "ollamaApi": {
-          "id": "74plNGSKxqi2ENGg",
-          "name": "Ollama account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "contextWindowLength": 3
-      },
-      "id": "988a4e38-b55a-45e8-88d8-61f1f760fd31",
-      "name": "Schreib-AI Memory",
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        880,
-        1320
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://schreib-ai-worker:8090/finalize-generation",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ generated_text: $json.output || $json.text || $json.response || $json.answer || $json, projectId: $node[\"Build Continue Context\"].json.projectId, outputLanguage: $node[\"Build Continue Context\"].json.outputLanguage, target: $node[\"Build Continue Context\"].json.target, chapter: $node[\"Build Continue Context\"].json.chapter, timeline_date: $node[\"Build Continue Context\"].json.timeline_date, context_files: $node[\"Build Continue Context\"].json.context_files }) }}",
-        "options": {}
-      },
-      "id": "8d97e66d-a782-41fd-9c7d-86ecf00b9dbe",
-      "name": "Create Continue Review Plan",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
       "position": [
         1080,
         1100
@@ -310,7 +294,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
         "options": {
-          "timeout": 900000
+          "timeout": 43320000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
         }
       },
       "id": "2f68420e-e80c-4d40-b66b-8e751f869671",
@@ -320,87 +311,24 @@
       "position": [
         520,
         1560
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://ollama-gateway:11434/api/generate",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: \"mistral-rag:latest\", prompt: $json.chatInput, stream: false, options: { temperature: 0.2, num_predict: 4096 } }) }}",
-        "options": {
-          "timeout": 900000
-        }
-      },
-      "id": "93623958-b168-41e7-a7e6-62db2845d7bd",
-      "name": "Run Synthesis Ollama",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      ],
       "onError": "continueRegularOutput",
-      "position": [
-        800,
-        1560
-      ]
-    },
-    {
-      "parameters": {
-        "options": {
-          "systemMessage": "Du bist der Schreib-AI Synthese-Agent. Analysiere Manuskriptquellen in Subroutinen fuer Coreference, Figuren, Orte, Timeline, Weltwissen und Konsistenz. Loese Pronomen wie she/he/sie/er auf konkrete Figuren auf. Gib ausschliesslich valides JSON gemaess Prompt zurueck, damit der Worker lokale Schichtdateien schreiben kann."
-        }
-      },
-      "id": "361e30bd-4566-4102-86cf-7cb11bbddf0d",
-      "name": "Schreib-AI Synthesis Agent",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 2,
-      "position": [
-        800,
-        1560
-      ]
-    },
-    {
-      "parameters": {
-        "contextWindowLength": 2
-      },
-      "id": "be6fa4a9-82e0-4b26-ad2e-2ac6e85f1738",
-      "name": "Schreib-AI Synthesis Memory",
-      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
-      "typeVersion": 1.3,
-      "position": [
-        900,
-        1780
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "http://schreib-ai-worker:8090/finalize-synthesis",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ generated_text: $json.output || $json.text || $json.response || $json.answer || $json, projectId: $node[\"Run Synthesis Worker\"].json.projectId, outputLanguage: $node[\"Run Synthesis Worker\"].json.outputLanguage, source_files: $node[\"Run Synthesis Worker\"].json.source_files, source_chunks: $node[\"Run Synthesis Worker\"].json.source_chunks }) }}",
-        "options": {}
-      },
-      "id": "93efb7dc-083d-45cc-987d-73fbd2af5d95",
-      "name": "Finalize Synthesis Files",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1080,
-        1560
-      ]
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "fa872a3f-e456-4691-9e36-8a5f1334e577",
       "name": "Return Synthesis Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        1340,
+        1080,
         1560
       ]
     },
@@ -429,7 +357,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
         "options": {
-          "timeout": 900000
+          "timeout": 43200000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
         }
       },
       "id": "4b75a55c-finalize-chapter",
@@ -439,20 +374,24 @@
       "position": [
         520,
         1880
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "22d87287-return-finalize",
       "name": "Return Finalize Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1080,
         1880
       ]
     },
@@ -481,7 +420,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
         "options": {
-          "timeout": 900000
+          "timeout": 43200000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
         }
       },
       "id": "c0b12345-run-qdrant-sync",
@@ -491,20 +437,24 @@
       "position": [
         520,
         2160
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "f0d23456-return-qdrant-sync",
       "name": "Return Qdrant Sync Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
       "position": [
-        800,
+        1080,
         2160
       ]
     },
@@ -533,7 +483,14 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.body || $json) }}",
         "options": {
-          "timeout": 180000
+          "timeout": 180000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
         }
       },
       "id": "d1c34567-run-qdrant-search",
@@ -543,18 +500,126 @@
       "position": [
         520,
         2400
-      ]
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ $json }}",
-        "options": {}
+        "responseBody": "={{ $json.body }}",
+        "options": {
+          "responseCode": "={{ $json.httpStatus }}"
+        }
       },
       "id": "a2e45678-return-qdrant-search",
       "name": "Return Qdrant Search Result",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
+      "position": [
+        1080,
+        2400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"analyze\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "a8a1c6c0-5a6e-5cde-a330-c2c2df2cb83c",
+      "name": "Check analyze Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"accept\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "fa3fca27-8b6d-59f0-80f1-b7400d1bf2c5",
+      "name": "Check accept Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"story\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "8387d715-0b11-5a8b-b2b1-59c9807d9de3",
+      "name": "Check story Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        820
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"continue\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "18279a97-f280-5c6e-bec3-ceb30ba2302f",
+      "name": "Check continue Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"synthesize\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "d965c5a7-f9c4-5dd1-b4b1-ceffe78993e1",
+      "name": "Check synthesize Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"finalize\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "7301c8b6-fe2d-5d48-9b77-db1b7e8a164f",
+      "name": "Check finalize Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        1880
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"qdrant-sync\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "6502b939-ebaa-5d7a-8e14-10fd4d031707",
+      "name": "Check qdrant-sync Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        2160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const operation = \"qdrant-search\";\nconst reply = $json && typeof $json === 'object' ? $json : {};\nconst httpStatus = Number(reply.statusCode);\nconst body = reply.body;\nconst isObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);\nconst hasBody = isObject(body);\nconst isHttpStatus = Number.isInteger(httpStatus) && httpStatus >= 200 && httpStatus <= 599;\nconst statusFailed = hasBody && ['error', 'failed', 'blocked_for_review'].includes(body.status);\nconst hasError = hasBody && body.error !== undefined && body.error !== null && body.error !== false && body.error !== '';\nconst isReview = ['analyze', 'continue', 'synthesize', 'finalize'].includes(operation);\nconst reviewShapeValid = !isReview || (hasBody && Array.isArray(body.file_changes));\nif (isHttpStatus && httpStatus < 300 && hasBody && body.ok === true && !statusFailed && !hasError && reviewShapeValid) {\n  return [{json: {httpStatus, body}}];\n}\n\nconst transport = isObject(reply.error) ? reply.error : {};\nconst transportCode = String(transport.code || transport.cause?.code || '');\nconst transportMessage = String(transport.message || (typeof reply.error === 'string' ? reply.error : ''));\nconst timeout = /TIMEOUT|TIMEDOUT/i.test(transportCode) || /\\btimed?\\s*out\\b|timeout/i.test(transportMessage);\nconst invalidJson = /invalid.*json|json.*invalid|valid json/i.test(transportMessage);\nconst blocked = hasBody && body.status === 'blocked_for_review';\nlet failureStatus = isHttpStatus && httpStatus >= 400 ? httpStatus :\n  blocked ? 409 : timeout ? 504 : invalidJson ? 502 : reply.error ? 503 : 502;\nlet code = timeout ? 'worker_timeout' : invalidJson ? 'invalid_worker_response' :\n  reply.error && !isHttpStatus ? 'worker_unavailable' : 'worker_request_failed';\nlet message = timeout ? 'Der Schreibauftrag hat die Wartezeit ueberschritten. Bitte den Auftragsstatus pruefen, bevor derselbe Auftrag erneut gestartet wird.' :\n  failureStatus === 503 && !isHttpStatus ? 'Der Schreibdienst ist derzeit nicht erreichbar.' :\n  'Der Schreibdienst hat keine erfolgreiche, verwertbare Antwort geliefert.';\nconst workerError = hasBody && isObject(body.error) ? body.error : null;\nif (workerError && typeof workerError.code === 'string' && /^[a-z][a-z0-9_]{0,79}$/i.test(workerError.code)) {\n  code = workerError.code;\n  if (typeof workerError.message === 'string' && workerError.message.trim()) message = workerError.message;\n}\nconst failure = {\n  ok: false,\n  status: blocked ? 'blocked_for_review' : 'error',\n  operation,\n  error: {code, message},\n  message,\n  file_changes: [],\n};\nif (hasBody && typeof body.projectId === 'string') failure.projectId = body.projectId;\nif (hasBody && isObject(body.analysis)) failure.analysis = body.analysis;\nif (hasBody && isObject(body.guard)) failure.guard = body.guard;\nreturn [{json: {httpStatus: failureStatus, body: failure}}];"
+      },
+      "id": "89f41f47-35ba-5f36-954a-c3af54807910",
+      "name": "Check qdrant-search Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         800,
         2400
@@ -578,7 +643,7 @@
       "main": [
         [
           {
-            "node": "Return Review Plan",
+            "node": "Check analyze Result",
             "type": "main",
             "index": 0
           }
@@ -600,7 +665,7 @@
       "main": [
         [
           {
-            "node": "Return Apply Result",
+            "node": "Check accept Result",
             "type": "main",
             "index": 0
           }
@@ -622,7 +687,7 @@
       "main": [
         [
           {
-            "node": "Return Story Result",
+            "node": "Check story Result",
             "type": "main",
             "index": 0
           }
@@ -644,29 +709,7 @@
       "main": [
         [
           {
-            "node": "Return Continue Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schreib-AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Create Continue Review Plan",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create Continue Review Plan": {
-      "main": [
-        [
-          {
-            "node": "Return Continue Result",
+            "node": "Check continue Result",
             "type": "main",
             "index": 0
           }
@@ -679,77 +722,6 @@
           {
             "node": "Run Synthesis Worker",
             "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Run Synthesis Ollama": {
-      "main": [
-        [
-          {
-            "node": "Finalize Synthesis Files",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schreib-AI Synthesis Agent": {
-      "main": [
-        [
-          {
-            "node": "Finalize Synthesis Files",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Finalize Synthesis Files": {
-      "main": [
-        [
-          {
-            "node": "Return Synthesis Result",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schreib-AI Ollama Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Schreib-AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          },
-          {
-            "node": "Schreib-AI Synthesis Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schreib-AI Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "Schreib-AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Schreib-AI Synthesis Memory": {
-      "ai_memory": [
-        [
-          {
-            "node": "Schreib-AI Synthesis Agent",
-            "type": "ai_memory",
             "index": 0
           }
         ]
@@ -770,7 +742,7 @@
       "main": [
         [
           {
-            "node": "Return Finalize Result",
+            "node": "Check finalize Result",
             "type": "main",
             "index": 0
           }
@@ -781,7 +753,7 @@
       "main": [
         [
           {
-            "node": "Return Synthesis Result",
+            "node": "Check synthesize Result",
             "type": "main",
             "index": 0
           }
@@ -803,7 +775,7 @@
       "main": [
         [
           {
-            "node": "Return Qdrant Sync Result",
+            "node": "Check qdrant-sync Result",
             "type": "main",
             "index": 0
           }
@@ -825,6 +797,94 @@
       "main": [
         [
           {
+            "node": "Check qdrant-search Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check analyze Result": {
+      "main": [
+        [
+          {
+            "node": "Return Review Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check accept Result": {
+      "main": [
+        [
+          {
+            "node": "Return Apply Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check story Result": {
+      "main": [
+        [
+          {
+            "node": "Return Story Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check continue Result": {
+      "main": [
+        [
+          {
+            "node": "Return Continue Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check synthesize Result": {
+      "main": [
+        [
+          {
+            "node": "Return Synthesis Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check finalize Result": {
+      "main": [
+        [
+          {
+            "node": "Return Finalize Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check qdrant-sync Result": {
+      "main": [
+        [
+          {
+            "node": "Return Qdrant Sync Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check qdrant-search Result": {
+      "main": [
+        [
+          {
             "node": "Return Qdrant Search Result",
             "type": "main",
             "index": 0
@@ -835,7 +895,8 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
   "versionId": "6b8d31c7-6630-4d04-b8ce-07730214ea44",
   "meta": {
